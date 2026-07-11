@@ -30,7 +30,7 @@ if (!SESSION_COOKIE) {
   process.exit(1);
 }
 
-const BASE = process.env.ORVIX_BASE_URL ?? "http://localhost:3300";
+const BASE = process.env.ORVIX_BASE_URL ?? "http://localhost:3301";
 const VIEWPORT = { width: 1440, height: 900 };
 
 const PAGES = [
