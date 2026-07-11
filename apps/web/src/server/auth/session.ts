@@ -92,17 +92,31 @@ export function createMemorySession(userId: string, workspaceId: string): Sessio
 
 export async function setMemorySessionCookie(session: Session): Promise<void> {
   const jar = await cookies();
-  // Serverless-safe cookie: encodes the session id AND the user/workspace
-  // ids so the session can be rehydrated on a cold Lambda start when
-  // the in-memory map is empty. See getMemorySession().
+  // Serverless-safe cookie: encodes the full user + workspace data
+  // so the session can be rehydrated on a cold Lambda start when
+  // the in-memory map AND the repository are both empty. This is
+  // required for the Vercel serverless deployment (M3.1.2).
+  const user = await repository.findUserById(session.userId);
+  const workspace = await repository.getWorkspace(session.workspaceId);
+  if (!user || !workspace) {
+    // Fall back to the older format if the lookup fails.
+    const payload = { sid: session.id, uid: session.userId, wid: session.workspaceId, exp: session.expiresAt };
+    const encoded = "v3." + Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+    jar.set(COOKIE, encoded, { httpOnly: true, sameSite: "lax", path: "/", secure: process.env["NODE_ENV"] === "production", maxAge: TTL_MS / 1000 });
+    return;
+  }
   const payload = {
     sid: session.id,
-    uid: session.userId,
-    wid: session.workspaceId,
+    uid: user.id,
+    wid: workspace.id,
+    uemail: user.email,
+    uname: user.displayName,
+    urole: user.roleKey,
+    wname: workspace.name,
     exp: session.expiresAt,
   };
   const encoded =
-    "v3." +
+    "v4." +
     Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   jar.set(COOKIE, encoded, {
     httpOnly: true,
@@ -123,15 +137,56 @@ async function getMemorySession(): Promise<ServerSession | null> {
   const raw = jar.get(COOKIE)?.value;
   if (!raw) return null;
 
-  // Two cookie formats are accepted:
+  // Three cookie formats are accepted:
   //   1. Plain session id (legacy) — looked up in the in-memory store.
-  //      Works for single-process deployments; fails on serverless
-  //      (Vercel) where each Lambda is a fresh process.
-  //   2. JSON-encoded cookie payload (M3.1) — carries
-  //      { sid, uid, wid, exp }. The sessionId is still stored
-  //      in-memory (best-effort), but the user/workspace lookup
-  //      falls back to the repository directly using the encoded
-  //      IDs, so sessions survive cold Lambda starts.
+  //   2. v3.<base64url(json)> — minimal { sid, uid, wid, exp }. Falls
+  //      back to the repository for user/workspace lookup. Works on
+  //      single-process deployments.
+  //   3. v4.<base64url(json)> — full self-contained payload with
+  //      user + workspace data. No repository lookup required; works
+  //      on serverless where the in-memory store is per-Lambda.
+  const now = Date.now();
+  if (raw.startsWith("v4.")) {
+    try {
+      const d = JSON.parse(
+        Buffer.from(raw.slice(3), "base64url").toString("utf8"),
+      ) as {
+        sid: string; uid: string; wid: string; uemail: string;
+        uname: string; urole: string; wname: string; exp: string;
+      };
+      if (new Date(d.exp).getTime() < now) return null;
+      const user = {
+        id: d.uid,
+        workspaceId: d.wid,
+        email: d.uemail,
+        displayName: d.uname,
+        roleKey: d.urole as ServerSession["user"]["roleKey"],
+        createdAt: d.exp,
+      };
+      const workspace = {
+        id: d.wid,
+        name: d.wname,
+        industry: "other" as const,
+        companySize: "2-10" as const,
+        teamStructure: "functional" as const,
+        primaryGoal: "ship-faster" as const,
+        status: "active" as const,
+        createdAt: d.exp,
+      };
+      return {
+        userId: user.id,
+        workspaceId: workspace.id,
+        roleKey: user.roleKey,
+        expiresAt: d.exp,
+        user,
+        workspace,
+        source: "memory",
+      };
+    } catch {
+      return null;
+    }
+  }
+
   let sessionId: string;
   let cookieUserId: string | undefined;
   let cookieWorkspaceId: string | undefined;
@@ -156,16 +211,15 @@ async function getMemorySession(): Promise<ServerSession | null> {
   const sessions = memorySessions();
   const session = sessions.get(sessionId);
   if (session) {
-    if (new Date(session.expiresAt).getTime() < Date.now()) {
+    if (new Date(session.expiresAt).getTime() < now) {
       sessions.delete(sessionId);
       return null;
     }
   } else if (!cookieUserId || !cookieWorkspaceId) {
     return null;
   }
-  // Expiry from the cookie if no in-memory session.
   if (!session && cookieExpiresAt) {
-    if (new Date(cookieExpiresAt).getTime() < Date.now()) return null;
+    if (new Date(cookieExpiresAt).getTime() < now) return null;
   }
 
   const user = await repository.findUserById(session?.userId ?? cookieUserId!);
