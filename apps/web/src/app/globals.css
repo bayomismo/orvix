@@ -180,6 +180,48 @@
     100% { transform: translateX(0); }
   }
 
+  /* ============================ AppShell keyframes ============================ */
+  @keyframes orvix-fade-in {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes orvix-cmd-in {
+    0%   { opacity: 0; transform: translate(-50%, -8px) scale(0.98); }
+    100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  }
+  @keyframes orvix-pop-in {
+    0%   { opacity: 0; transform: translateY(-4px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes orvix-sheet-in {
+    0%   { opacity: 0; transform: translateX(24px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes orvix-page-in {
+    0%   { opacity: 0; transform: translateY(4px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes orvix-orb-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 24px 0 rgba(139, 133, 240, 0.40); }
+    50%      { transform: scale(1.06); box-shadow: 0 0 36px 4px rgba(139, 133, 240, 0.55); }
+  }
+  @keyframes orvix-orb-think {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50%      { transform: rotate(180deg) scale(1.08); }
+  }
+  @keyframes orvix-orb-dot {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.85); }
+    50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.15); }
+  }
+
+  /* Pulse thick variant (used during intense action states) */
+  .orvix-pulse--thick { height: 2px; }
+
+  /* The page wrapper's enter animation. */
+  .orvix-page-enter {
+    animation: orvix-page-in 240ms var(--motion-ease-out-quint) both;
+  }
+
   /* ============================ Glass ============================ */
   .orvix-glass {
     background: var(--glass-bg);

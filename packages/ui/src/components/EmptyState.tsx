@@ -74,7 +74,7 @@ export function EmptyState({
       {icon ? (
         <div
           aria-hidden="true"
-          className="flex h-12 w-12 items-center justify-center rounded-md bg-surface-elevated border border-surface-divider text-text-muted shadow-1"
+          className="flex h-9 w-9 items-center justify-center rounded-md bg-surface-elevated border border-surface-divider text-text-muted shadow-1"
         >
           {icon}
         </div>

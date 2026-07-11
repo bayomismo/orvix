@@ -41,7 +41,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ref,
   ) => {
     const sizeClass =
-      inputSize === "sm" ? "h-8 text-xs" : inputSize === "lg" ? "h-11 text-base" : "h-9 text-sm";
+      inputSize === "sm" ? "h-8 text-xs" : inputSize === "lg" ? "h-10 text-base" : "h-9 text-sm";
     return (
       <div className={cn(baseControlClass, controlBorder(invalid), className)}>
         {leadingIcon ? (

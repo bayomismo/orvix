@@ -1,17 +1,20 @@
 import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/AppShell";
-import { AIAssistantBar } from "@/components/AIAssistantBar";
 import { requireSession } from "@/server/auth";
 
 /**
  * Authed app shell — the (app) route group.
  *
- * Real session via the in-memory store + cookie. `requireSession()`
- * redirects to /onboarding if no session is present. The contract
- * here is the same one Auth.js v5 (RFC-0001) will satisfy.
+ * v1.0 AppShell owns all chrome:
+ *   - Pulse signature status line
+ *   - Floating glass sidebar + topbar
+ *   - Universal command palette (⌘K)
+ *   - Floating AI orb + sheet
+ *   - Notification center + profile menu
  *
- * The Geist font is loaded in the root layout; we don't re-import.
+ * Real session via the in-memory store + cookie. `requireSession()`
+ * redirects to /onboarding if no session is present.
  */
 
 export const dynamic = "force-dynamic";
@@ -24,6 +27,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       id: s.user.id,
       displayName: s.user.displayName,
       email: s.user.email,
+      ...(s.user.roleKey ? { role: s.user.roleKey } : {}),
     },
     workspace: {
       id: s.workspace.id,
@@ -37,9 +41,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-surface-canvas">
-      <AppShell session={session}>{children}</AppShell>
-      <AIAssistantBar workspaceId={s.workspace.id} />
-    </div>
+    <AppShell session={session}>{children}</AppShell>
   );
 }

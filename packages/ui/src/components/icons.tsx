@@ -226,3 +226,9 @@ export const Trash = ({ size, className, ...p }: IconProps) => (
     <path d="M3 4h10M6 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M5 4l1 9a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1l1-9" />
   </Svg>
 );
+
+export const LogOut = ({ size, className, ...p }: IconProps) => (
+  <Svg size={size} className={className} {...p}>
+    <path d="M10 12H3M6 9l-3 3 3 3M10 3h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2" />
+  </Svg>
+);

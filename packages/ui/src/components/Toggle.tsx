@@ -38,7 +38,7 @@ export const OptionCard = React.forwardRef<HTMLInputElement, OptionCardProps>(
           <div
             aria-hidden="true"
             className={cn(
-              "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md",
+              "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md",
               "bg-surface-inset text-text-secondary",
               "transition-colors duration-fast ease-out-quint",
               "group-has-[:checked]/option:bg-surface-elevated group-has-[:checked]/option:text-brand-accent group-has-[:checked]/option:shadow-1",

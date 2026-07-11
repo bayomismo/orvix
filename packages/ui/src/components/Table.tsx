@@ -107,7 +107,7 @@ export const TR = React.forwardRef<HTMLTableRowElement, TRProps>(
           "border-b border-surface-divider transition-colors duration-fast ease-out-quint",
           clickable && "cursor-pointer hover:bg-highlight-1",
           selected && "bg-highlight-2 hover:bg-highlight-2",
-          density === "comfortable" ? "h-12" : "h-9",
+          density === "comfortable" ? "h-9" : "h-7",
           className,
         )}
         {...props}
