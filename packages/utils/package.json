@@ -20,11 +20,11 @@
   },
   "dependencies": {
     "@orvix/schemas": "workspace:*",
+    "typescript": "^5.6.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@orvix/config": "workspace:*",
-    "typescript": "^5.6.3",
     "vitest": "^2.1.6"
   }
 }

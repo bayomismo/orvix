@@ -15,11 +15,11 @@
     "./schemas/intake-bank.v1.json": "./src/json/intake-bank.v1.json"
   },
   "dependencies": {
+    "typescript": "^5.6.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@orvix/config": "workspace:*",
-    "typescript": "^5.6.3",
     "vitest": "^2.1.6"
   },
   "scripts": {

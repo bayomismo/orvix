@@ -2,7 +2,7 @@
   "name": "@orvix/types",
   "version": "0.0.1",
   "private": true,
-  "description": "Shared TypeScript types only — no runtime code.",
+  "description": "Shared TypeScript types only \u2014 no runtime code.",
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
@@ -14,7 +14,9 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@orvix/config": "workspace:*",
+    "@orvix/config": "workspace:*"
+  },
+  "dependencies": {
     "typescript": "^5.6.3"
   }
 }

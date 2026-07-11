@@ -47,6 +47,9 @@ importers:
       fastify:
         specifier: ^5.1.0
         version: 5.10.0
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -57,9 +60,6 @@ importers:
       tsx:
         specifier: ^4.19.2
         version: 4.23.0
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
       vitest:
         specifier: ^2.1.6
         version: 2.1.9(@types/node@22.20.1)
@@ -132,6 +132,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.7(react@19.2.7)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -163,9 +166,6 @@ importers:
       tailwindcss:
         specifier: ^3.4.15
         version: 3.4.19(tsx@4.23.0)
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
       vitest:
         specifier: ^2.1.6
         version: 2.1.9(@types/node@22.20.1)
@@ -181,6 +181,9 @@ importers:
       '@orvix/utils':
         specifier: workspace:*
         version: link:../utils
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -188,9 +191,6 @@ importers:
       '@orvix/config':
         specifier: workspace:*
         version: link:../config
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
       vitest:
         specifier: ^2.1.6
         version: 2.1.9(@types/node@22.20.1)
@@ -224,6 +224,12 @@ importers:
       next-auth:
         specifier: 5.0.0-beta.31
         version: 5.0.0-beta.31(next@15.5.20(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+      prisma:
+        specifier: ^5.22.0
+        version: 5.22.0
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
       uuid:
         specifier: ^11.0.3
         version: 11.1.1
@@ -240,18 +246,15 @@ importers:
       eslint:
         specifier: ^9.16.0
         version: 9.39.4(jiti@1.21.7)
-      prisma:
-        specifier: ^5.22.0
-        version: 5.22.0
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
       vitest:
         specifier: ^2.1.6
         version: 2.1.9(@types/node@22.20.1)
 
   packages/schemas:
     dependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -259,9 +262,6 @@ importers:
       '@orvix/config':
         specifier: workspace:*
         version: link:../config
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
       vitest:
         specifier: ^2.1.6
         version: 2.1.9(@types/node@22.20.1)
@@ -271,6 +271,9 @@ importers:
       '@orvix/utils':
         specifier: workspace:*
         version: link:../utils
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -278,21 +281,19 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
-      typescript:
-        specifier: ^5.5.0
-        version: 5.9.3
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@22.20.1)
 
   packages/types:
+    dependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
     devDependencies:
       '@orvix/config':
         specifier: workspace:*
         version: link:../config
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
 
   packages/ui:
     dependencies:
@@ -332,6 +333,9 @@ importers:
       tailwind-merge:
         specifier: ^2.5.4
         version: 2.6.1
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -348,15 +352,15 @@ importers:
       tailwindcss:
         specifier: ^3.4.15
         version: 3.4.19(tsx@4.23.0)
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
 
   packages/utils:
     dependencies:
       '@orvix/schemas':
         specifier: workspace:*
         version: link:../schemas
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -364,9 +368,6 @@ importers:
       '@orvix/config':
         specifier: workspace:*
         version: link:../config
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
       vitest:
         specifier: ^2.1.6
         version: 2.1.9(@types/node@22.20.1)
@@ -5780,8 +5781,8 @@ snapshots:
       '@typescript-eslint/parser': 7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3)
       eslint: 9.39.4(jiti@1.21.7)
       eslint-import-resolver-node: 0.3.10
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@1.21.7))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@1.21.7))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4(jiti@1.21.7))
       eslint-plugin-react: 7.37.5(eslint@9.39.4(jiti@1.21.7))
       eslint-plugin-react-hooks: 5.2.0(eslint@9.39.4(jiti@1.21.7))
@@ -5800,7 +5801,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@1.21.7)):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3
@@ -5811,22 +5812,22 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@1.21.7))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.14.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@1.21.7)):
+  eslint-module-utils@2.14.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3)
       eslint: 9.39.4(jiti@1.21.7)
       eslint-import-resolver-node: 0.3.10
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.4(jiti@1.21.7))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7))
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@1.21.7)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -5837,7 +5838,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.4(jiti@1.21.7)
       eslint-import-resolver-node: 0.3.10
-      eslint-module-utils: 2.14.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@1.21.7))
+      eslint-module-utils: 2.14.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@7.18.0(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7)))(eslint@9.39.4(jiti@1.21.7))
       hasown: 2.0.4
       is-core-module: 2.16.2
       is-glob: 4.0.3
