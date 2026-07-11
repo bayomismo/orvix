@@ -1,8 +1,174 @@
 /* tokens.css — Source of truth for all visual decisions.
- * v0.3 — premium redesign.
+ * ORVIX Design System v1.0 — Direction A: Conductor
+ *
+ * Tokens are CSS custom properties so feature code never uses
+ * raw color values, hex literals are forbidden by ESLint.
+ *
+ * Composition law: every utility class resolves to a token via
+ * these custom properties, so light/dark switching is a one-line
+ * theme attribute change with no rebuild.
+ *
+ * Dark is the default (Conductor direction). Light is the optional
+ * alternative triggered by `data-theme="light"` on the root.
  */
 
-:root {
+:root,
+[data-theme="dark"] {
+  /* ---------- Brand ---------- */
+  --brand-primary: #FAFAFA;
+  --brand-accent: #5046E5;          /* Electric Indigo */
+  --brand-accent-soft: #1E1A4A;
+  --brand-ai: #8B85F0;              /* AI layer — purple-violet */
+  --brand-ai-soft: #22153E;
+
+  /* ---------- Neutrals (dark mode) ---------- */
+  --neutral-0: #08080B;
+  --neutral-50: #0E0E12;
+  --neutral-100: #14141A;
+  --neutral-150: #1A1A21;
+  --neutral-200: #22222A;
+  --neutral-300: #2D2D38;
+  --neutral-400: #54545F;
+  --neutral-500: #75757F;
+  --neutral-600: #96969F;
+  --neutral-700: #B4B4BD;
+  --neutral-800: #D6D6DE;
+  --neutral-900: #EDEDEF;
+  --neutral-950: #FAFAFA;
+
+  /* ---------- Surfaces (dark) ---------- */
+  --surface-canvas: #08080B;        /* Page background, deepest */
+  --surface-raised: #0E0E12;        /* Cards, panels, sidebar */
+  --surface-elevated: #14141A;      /* Inputs, popovers, modals */
+  --surface-overlay: rgba(0, 0, 0, 0.65);
+  --surface-divider: #22222A;
+  --surface-divider-strong: #2D2D38;
+  --surface-inset: #0A0A0F;
+  --surface-glass: rgba(20, 20, 26, 0.55);  /* Glass effect base */
+
+  /* ---------- Text (dark) ---------- */
+  --text-primary: #FAFAFA;          /* Default body / headings */
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --text-subtle: #3F3F46;
+  --text-on-accent: #FFFFFF;
+  --text-link: #8B85F0;
+  --text-inverse: #08080B;
+
+  /* ---------- Status (dark) ---------- */
+  --status-success: #34D399;
+  --status-success-soft: #0A2E20;
+  --status-warning: #FBBF24;
+  --status-warning-soft: #3A2807;
+  --status-danger: #F87171;
+  --status-danger-soft: #3A1818;
+  --status-info: #60A5FA;
+  --status-info-soft: #0F2237;
+  --status-neutral: #A1A1AA;
+  --status-neutral-soft: #1A1A21;
+
+  /* ---------- Highlights (dark) ---------- */
+  --highlight-1: rgba(80, 70, 229, 0.10);
+  --highlight-2: rgba(80, 70, 229, 0.16);
+  --highlight-3: rgba(80, 70, 229, 0.22);
+  --highlight-ai-1: rgba(139, 133, 240, 0.10);
+  --highlight-ai-2: rgba(139, 133, 240, 0.18);
+  --highlight-ai-3: rgba(139, 133, 240, 0.28);
+
+  /* ---------- The Pulse (signature) ---------- */
+  --pulse-color: var(--highlight-1);
+  --pulse-glow: 0 0 8px 0 rgba(80, 70, 229, 0);
+  --pulse-ai-glow: 0 0 8px 0 rgba(139, 133, 240, 0);
+  --pulse-thickness: 1px;
+
+  /* ---------- AI visual language ---------- */
+  --ai-dot-size: 4px;
+  --ai-glow-blur: 8px;
+  --ai-glow-opacity: 0.30;
+  --ai-border-opacity: 0.30;
+
+  /* ---------- Elevation (dark) ---------- */
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-2: 0 2px 4px rgba(0,0,0,0.40), 0 4px 16px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-3: 0 4px 8px rgba(0,0,0,0.50), 0 12px 32px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-4: 0 8px 16px rgba(0,0,0,0.60), 0 24px 56px rgba(0,0,0,0.50), 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-focus: 0 0 0 2px var(--surface-canvas), 0 0 0 4px var(--brand-accent);
+  --shadow-glow-accent: 0 0 24px 0 rgba(80, 70, 229, 0.35);
+  --shadow-glow-ai: 0 0 24px 0 rgba(139, 133, 240, 0.40);
+
+  /* ---------- Glass effect ---------- */
+  --glass-blur: 24px;
+  --glass-saturate: 180%;
+  --glass-bg: var(--surface-glass);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+
+  /* ---------- Radius (7 tokens per spec) ---------- */
+  --radius-none: 0;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ---------- Motion (4 durations + 5 easings per spec) ---------- */
+  --motion-instant: 80ms;
+  --motion-fast: 160ms;
+  --motion-default: 240ms;
+  --motion-slow: 400ms;
+  --motion-ease-out-quint: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  --motion-ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-ease-in-cubic: cubic-bezier(0.32, 0, 0.67, 0);
+  --motion-ease-linear: linear;
+  /* Legacy aliases for v0.3 compatibility during the M1 transition. */
+  --motion-instant-legacy: 0ms;
+  --motion-fast-legacy: 120ms;
+  --motion-base-legacy: 180ms;
+  --motion-slow-legacy: 260ms;
+  --motion-page-legacy: 360ms;
+  --motion-spring-legacy: 420ms;
+  --motion-snappy-legacy: cubic-bezier(0.2, 0, 0, 1);
+  --motion-smooth-legacy: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---------- Z-index scale ---------- */
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+  --z-palette: 60;
+  --z-pulse: 70;        /* The Pulse line always sits above content */
+
+  /* ---------- Fonts ---------- */
+  --font-display: var(--font-sans, "Geist"), "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-sans, "Geist"), "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-stack, "Geist Mono"), "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  /* ---------- Spacing (8px grid per spec) ---------- */
+  --space-0: 0;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 96px;
+  --space-12: 128px;
+  /* Legacy v0.3 spacing kept for components in the middle of migration. */
+  --space-0_5: 2px;
+  --space-1_5: 6px;
+}
+
+/* ===========================================================================
+ * Light theme (optional, system-follow or explicit toggle).
+ * Conductor direction is dark-first; light is offered as an alternative.
+ * =========================================================================== */
+[data-theme="light"] {
   --brand-primary: #0A0A0F;
   --brand-accent: #5046E5;
   --brand-accent-soft: #EEF0FE;
@@ -30,6 +196,7 @@
   --surface-divider: #EDEDEF;
   --surface-divider-strong: #E0E0E4;
   --surface-inset: #F4F4F6;
+  --surface-glass: rgba(255, 255, 255, 0.75);
 
   --text-primary: #0A0A0F;
   --text-secondary: #52525B;
@@ -37,6 +204,7 @@
   --text-subtle: #D1D1D6;
   --text-on-accent: #FFFFFF;
   --text-link: #5046E5;
+  --text-inverse: #FFFFFF;
 
   --status-success: #059669;
   --status-success-soft: #ECFDF5;
@@ -52,123 +220,39 @@
   --highlight-1: rgba(80, 70, 229, 0.06);
   --highlight-2: rgba(80, 70, 229, 0.10);
   --highlight-3: rgba(80, 70, 229, 0.16);
-
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-  --radius-3xl: 28px;
-  --radius-full: 9999px;
-
-  --motion-instant: 0ms linear;
-  --motion-fast: 120ms cubic-bezier(0.2, 0, 0, 1);
-  --motion-base: 180ms cubic-bezier(0.2, 0, 0, 1);
-  --motion-slow: 260ms cubic-bezier(0.16, 1, 0.3, 1);
-  --motion-page: 360ms cubic-bezier(0.16, 1, 0.3, 1);
-  --motion-spring: 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  --z-dropdown: 10;
-  --z-sticky: 20;
-  --z-overlay: 30;
-  --z-modal: 40;
-  --z-toast: 50;
-  --z-palette: 60;
-
-  --font-display: var(--font-sans, "Geist"), "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-sans, "Geist"), "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono-stack, "Geist Mono"), "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
-
-
-  --space-0: 0;
-  --space-0_5: 2px;
-  --space-1: 4px;
-  --space-1_5: 6px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-7: 28px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
-  --space-24: 96px;
+  --highlight-ai-1: rgba(139, 92, 246, 0.06);
+  --highlight-ai-2: rgba(139, 92, 246, 0.10);
+  --highlight-ai-3: rgba(139, 92, 246, 0.16);
 
   --shadow-1: 0 1px 2px rgba(15,15,20,0.04), 0 0 0 1px rgba(15,15,20,0.05);
   --shadow-2: 0 2px 4px rgba(15,15,20,0.05), 0 4px 16px rgba(15,15,20,0.06), 0 0 0 1px rgba(15,15,20,0.05);
   --shadow-3: 0 4px 8px rgba(15,15,20,0.06), 0 12px 32px rgba(15,15,20,0.10), 0 0 0 1px rgba(15,15,20,0.05);
   --shadow-4: 0 8px 16px rgba(15,15,20,0.08), 0 24px 56px rgba(15,15,20,0.16), 0 0 0 1px rgba(15,15,20,0.06);
   --shadow-focus: 0 0 0 2px var(--surface-canvas), 0 0 0 4px var(--brand-accent);
+  --shadow-glow-accent: 0 0 24px 0 rgba(80, 70, 229, 0.20);
+  --shadow-glow-ai: 0 0 24px 0 rgba(139, 92, 246, 0.22);
+
+  --glass-bg: var(--surface-glass);
+  --glass-border: 1px solid rgba(15, 15, 20, 0.06);
 }
 
-:root[data-theme="dark"],
-.dark {
-  --brand-primary: #FAFAFA;
-  --brand-accent: #8B85F0;
-  --brand-accent-soft: #1E1A4A;
-  --brand-ai: #B49BFA;
-  --brand-ai-soft: #22153E;
-
-  --neutral-0: #08080B;
-  --neutral-50: #0E0E12;
-  --neutral-100: #14141A;
-  --neutral-150: #1A1A21;
-  --neutral-200: #22222A;
-  --neutral-300: #2D2D38;
-  --neutral-400: #54545F;
-  --neutral-500: #75757F;
-  --neutral-600: #96969F;
-  --neutral-700: #B4B4BD;
-  --neutral-800: #D6D6DE;
-  --neutral-900: #EDEDEF;
-  --neutral-950: #FAFAFA;
-
-  --surface-canvas: #08080B;
-  --surface-raised: #0E0E12;
-  --surface-elevated: #14141A;
-  --surface-overlay: rgba(0, 0, 0, 0.65);
-  --surface-divider: #22222A;
-  --surface-divider-strong: #2D2D38;
-  --surface-inset: #0A0A0F;
-
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-  --text-subtle: #3F3F46;
-  --text-on-accent: #FFFFFF;
-  --text-link: #8B85F0;
-
-  --status-success: #34D399;
-  --status-success-soft: #0A2E20;
-  --status-warning: #FBBF24;
-  --status-warning-soft: #3A2807;
-  --status-danger: #F87171;
-  --status-danger-soft: #3A1818;
-  --status-info: #60A5FA;
-  --status-info-soft: #0F2237;
-  --status-neutral: #A1A1AA;
-  --status-neutral-soft: #1A1A21;
-
-  --highlight-1: rgba(139, 133, 240, 0.10);
-  --highlight-2: rgba(139, 133, 240, 0.16);
-  --highlight-3: rgba(139, 133, 240, 0.22);
-
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-2: 0 2px 4px rgba(0,0,0,0.40), 0 4px 16px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-3: 0 4px 8px rgba(0,0,0,0.50), 0 12px 32px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-4: 0 8px 16px rgba(0,0,0,0.60), 0 24px 56px rgba(0,0,0,0.50), 0 0 0 1px rgba(255,255,255,0.06);
-}
-
+/* ===========================================================================
+ * Reduced motion — collapse every duration to instant.
+ * Per the design system spec, no pulses, no shared-layout transitions.
+ * =========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  :root,
+  [data-theme="dark"],
+  [data-theme="light"] {
+    --motion-instant: 0ms;
     --motion-fast: 0ms;
-    --motion-base: 0ms;
+    --motion-default: 0ms;
     --motion-slow: 0ms;
-    --motion-page: 0ms;
-    --motion-spring: 0ms;
+    --motion-instant-legacy: 0ms;
+    --motion-fast-legacy: 0ms;
+    --motion-base-legacy: 0ms;
+    --motion-slow-legacy: 0ms;
+    --motion-page-legacy: 0ms;
+    --motion-spring-legacy: 0ms;
   }
 }

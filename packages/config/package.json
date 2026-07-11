@@ -20,12 +20,14 @@
   "scripts": {
     "lint": "echo \"@orvix/config has no lint\"",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "build": "echo \"@orvix/config build is a no-op (configs are consumed at typecheck/transform time)\""
   },
   "devDependencies": {
     "@typescript-eslint/parser": "^7.18.0",
     "eslint": "^9.16.0",
     "tailwindcss": "^3.4.15",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.6"
   }
 }

@@ -1,6 +1,13 @@
+@import "@orvix/config/tokens/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===========================================================================
+ * ORVIX Design System v1.0 — Direction A: Conductor
+ * Dark is the default. `data-theme="light"` on the root enables light.
+ * =========================================================================== */
 
 @layer base {
   *,
@@ -11,10 +18,16 @@
   }
 
   html {
+    /* Conductor: dark by default. Light is opt-in. */
+    color-scheme: dark;
     font-feature-settings: "cv11", "ss01", "cv09";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
   }
 
   body {
@@ -24,13 +37,16 @@
     color: var(--text-primary);
     background: var(--surface-canvas);
     font-variant-numeric: tabular-nums;
+    min-height: 100dvh;
   }
 
+  /* Selection */
   ::selection {
     background: var(--brand-accent-soft);
     color: var(--brand-accent);
   }
 
+  /* Focus ring — 2px brand accent with offset, no radius-bias */
   *:focus-visible {
     outline: 2px solid var(--brand-accent);
     outline-offset: 2px;
@@ -46,44 +62,135 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--neutral-200);
+    background: var(--neutral-300);
     border-radius: var(--radius-full);
     border: 2px solid var(--surface-canvas);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--neutral-300);
-  }
-  .dark ::-webkit-scrollbar-thumb {
-    background: var(--neutral-300);
-    border-color: var(--surface-canvas);
-  }
-
-  /* Selection in dark mode */
-  .dark ::selection {
-    background: var(--brand-accent-soft);
-    color: var(--brand-accent);
+    background: var(--neutral-400);
   }
 }
 
 @layer components {
-  /* Premium card with subtle hover lift */
+  /* ============================ Cards ============================ */
   .orvix-card {
-    @apply rounded-lg border border-surface-divider bg-surface-elevated shadow-1;
+    @apply rounded-md border border-surface-divider bg-surface-elevated shadow-1;
   }
   .orvix-card-hover {
-    @apply transition-all duration-fast ease-snappy hover:border-surface-divider-strong hover:shadow-2;
+    @apply transition-all duration-fast ease-out-quint hover:border-surface-divider-strong hover:shadow-2;
   }
   .orvix-card-interactive {
-    @apply transition-all duration-fast ease-snappy hover:-translate-y-px hover:border-surface-divider-strong hover:shadow-2;
+    @apply transition-all duration-fast ease-out-quint hover:-translate-y-px hover:border-surface-divider-strong hover:shadow-2;
   }
 
-  /* Subtle ring on focus for interactive cards */
+  /* ============================ Focus ============================ */
   .orvix-focus-ring:focus-visible {
     @apply outline-none ring-2 ring-brand-accent ring-offset-2 ring-offset-surface-canvas;
   }
 
-  /* Tabular numbers for everything that counts */
+  /* ============================ AI ============================ */
+  .orvix-ai-dot {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .orvix-ai-dot::after {
+    content: "";
+    width: var(--ai-dot-size);
+    height: var(--ai-dot-size);
+    border-radius: var(--radius-full);
+    background: var(--brand-ai);
+    box-shadow: 0 0 var(--ai-glow-blur) 0 rgba(139, 133, 240, var(--ai-glow-opacity));
+  }
+
+  .orvix-ai-glow {
+    box-shadow: 0 0 24px 0 rgba(139, 133, 240, 0.30);
+  }
+
+  .orvix-ai-border {
+    border-color: rgba(139, 133, 240, 0.30);
+  }
+
+  /* ============================ Pulse (signature) ============================ */
+  /*
+   * The Pulse is a 1px line at the top of every workspace surface,
+   * just below the top bar. It is always present and never loud.
+   * State is conveyed through color, animation, and glow.
+   */
+  .orvix-pulse {
+    position: relative;
+    height: var(--pulse-thickness);
+    background: var(--surface-divider);
+    overflow: visible;
+    transition: background var(--motion-fast) var(--motion-ease-out-quint);
+  }
+  .orvix-pulse[data-state="idle"] {
+    background: var(--surface-divider);
+  }
+  .orvix-pulse[data-state="syncing"] {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--brand-accent) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: orvix-pulse-syncing 2s linear infinite;
+  }
+  .orvix-pulse[data-state="ai"] {
+    background: var(--brand-ai);
+    box-shadow: 0 0 8px 0 rgba(139, 133, 240, 0.30);
+  }
+  .orvix-pulse[data-state="warning"] {
+    background: var(--status-warning);
+    box-shadow: 0 0 8px 0 rgba(251, 191, 36, 0.30);
+    animation: orvix-pulse-warning 1s ease-in-out 3;
+  }
+  .orvix-pulse[data-state="error"] {
+    background: var(--status-danger);
+    box-shadow: 0 0 8px 0 rgba(248, 113, 113, 0.30);
+  }
+  .orvix-pulse[data-state="action"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--pulse-thickness);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--brand-accent) 100%
+    );
+    transform: translateX(-100%);
+    animation: orvix-pulse-action 400ms var(--motion-ease-out-quint) forwards;
+  }
+
+  @keyframes orvix-pulse-syncing {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @keyframes orvix-pulse-warning {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+  @keyframes orvix-pulse-action {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(0); }
+  }
+
+  /* ============================ Glass ============================ */
+  .orvix-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: var(--glass-border);
+  }
+
+  /* ============================ Numerics ============================ */
   .orvix-numeric {
+    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }
@@ -94,22 +201,25 @@
   .border-hairline {
     border-width: 0.5px;
   }
-  /* Subtle gradient backgrounds for hero areas */
+
+  /* Subtle hero glow */
   .bg-hero-glow {
     background:
       radial-gradient(ellipse 80% 50% at 50% 0%, var(--highlight-1), transparent 70%),
       var(--surface-canvas);
   }
-  .dark .bg-hero-glow {
+  html[data-theme="light"] .bg-hero-glow {
     background:
       radial-gradient(ellipse 80% 50% at 50% 0%, var(--highlight-1), transparent 70%),
       var(--surface-canvas);
   }
+
   /* Premium text balance */
   .text-balance {
     text-wrap: balance;
   }
-  /* Smooth scroll for the page */
+
+  /* Smooth scroll */
   .scroll-smooth-y {
     scroll-behavior: smooth;
   }

@@ -1,4 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["./tailwind/**/*.ts", "./tokens/tokens.json"]
+  "include": ["./tailwind/**/*.ts", "./tokens/tokens.json", "./__tests__/**/*.ts"],
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  }
 }
