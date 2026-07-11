@@ -92,7 +92,19 @@ export function createMemorySession(userId: string, workspaceId: string): Sessio
 
 export async function setMemorySessionCookie(session: Session): Promise<void> {
   const jar = await cookies();
-  jar.set(COOKIE, session.id, {
+  // Serverless-safe cookie: encodes the session id AND the user/workspace
+  // ids so the session can be rehydrated on a cold Lambda start when
+  // the in-memory map is empty. See getMemorySession().
+  const payload = {
+    sid: session.id,
+    uid: session.userId,
+    wid: session.workspaceId,
+    exp: session.expiresAt,
+  };
+  const encoded =
+    "v3." +
+    Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  jar.set(COOKIE, encoded, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
@@ -108,23 +120,67 @@ export async function clearMemorySessionCookie(): Promise<void> {
 
 async function getMemorySession(): Promise<ServerSession | null> {
   const jar = await cookies();
-  const id = jar.get(COOKIE)?.value;
-  if (!id) return null;
+  const raw = jar.get(COOKIE)?.value;
+  if (!raw) return null;
+
+  // Two cookie formats are accepted:
+  //   1. Plain session id (legacy) — looked up in the in-memory store.
+  //      Works for single-process deployments; fails on serverless
+  //      (Vercel) where each Lambda is a fresh process.
+  //   2. JSON-encoded cookie payload (M3.1) — carries
+  //      { sid, uid, wid, exp }. The sessionId is still stored
+  //      in-memory (best-effort), but the user/workspace lookup
+  //      falls back to the repository directly using the encoded
+  //      IDs, so sessions survive cold Lambda starts.
+  let sessionId: string;
+  let cookieUserId: string | undefined;
+  let cookieWorkspaceId: string | undefined;
+  let cookieExpiresAt: string | undefined;
+  if (raw.startsWith("v3.")) {
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(raw.slice(3), "base64url").toString("utf8"),
+      ) as { sid: string; uid: string; wid: string; exp: string };
+      sessionId = decoded.sid;
+      cookieUserId = decoded.uid;
+      cookieWorkspaceId = decoded.wid;
+      cookieExpiresAt = decoded.exp;
+    } catch {
+      return null;
+    }
+  } else {
+    sessionId = raw;
+  }
+
+  // Best-effort in-memory validation.
   const sessions = memorySessions();
-  const session = sessions.get(id);
-  if (!session) return null;
-  if (new Date(session.expiresAt).getTime() < Date.now()) {
-    sessions.delete(id);
+  const session = sessions.get(sessionId);
+  if (session) {
+    if (new Date(session.expiresAt).getTime() < Date.now()) {
+      sessions.delete(sessionId);
+      return null;
+    }
+  } else if (!cookieUserId || !cookieWorkspaceId) {
     return null;
   }
-  const user = await repository.findUserById(session.userId);
-  const workspace = await repository.getWorkspace(session.workspaceId);
+  // Expiry from the cookie if no in-memory session.
+  if (!session && cookieExpiresAt) {
+    if (new Date(cookieExpiresAt).getTime() < Date.now()) return null;
+  }
+
+  const user = await repository.findUserById(session?.userId ?? cookieUserId!);
+  const workspace = await repository.getWorkspace(
+    session?.workspaceId ?? cookieWorkspaceId!,
+  );
   if (!user || !workspace) return null;
   return {
     userId: user.id,
     workspaceId: workspace.id,
     roleKey: user.roleKey,
-    expiresAt: session.expiresAt,
+    expiresAt:
+      session?.expiresAt ??
+      cookieExpiresAt ??
+      new Date(Date.now() + TTL_MS).toISOString(),
     user,
     workspace,
     source: "memory",
