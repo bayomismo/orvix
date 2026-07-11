@@ -46,11 +46,13 @@ function buildRepository(): Repository {
         log: process.env["NODE_ENV"] === "development" ? ["warn", "error"] : ["error"],
       });
     }
-    // The Prisma implementation is async-loaded to avoid a circular
-    // import: the prisma module imports withWorkspace which imports
-    // the Prisma client. We re-import here.
+    // The Prisma implementation is loaded statically; the package
+    // is ESM, so a static import would create a circular import
+    // (factory → prisma → client → factory). We use a synchronous
+    // require shim for the file at runtime. The `.ts` extension
+    // is resolved by the test runner (vitest) and Next.js webpack.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createPrismaRepository } = require("./prisma") as typeof import("./prisma");
+    const { createPrismaRepository } = require("./prisma.ts" + "") as typeof import("./prisma");
     return createPrismaRepository(globalThis.__orvixPrisma);
   }
 
