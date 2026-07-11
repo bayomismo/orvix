@@ -4,11 +4,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 /**
- * Badge — categorical chip.
+ * Badge — ORVIX Design System v1.0.
  *
- * Tone = meaning, not decoration. "ai" is reserved for AI involvement
- * (per PRD §07). Status tones use soft surface + colored text + matching
- * border for at-a-glance legibility on both light and dark.
+ * Tone = meaning, not decoration. `ai` is reserved for AI involvement
+ * (per spec). Status tones use soft surface + colored text + matching
+ * border for at-a-glance legibility in both light and dark.
+ *
+ * Three sizes: sm (10px), md (11px), lg (12px). Optional `dot` for
+ * status indicators. Optional `icon` for compact glyphs.
  */
 const badgeVariants = cva(
   "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-medium whitespace-nowrap",
@@ -16,7 +19,7 @@ const badgeVariants = cva(
     variants: {
       tone: {
         neutral:
-          "bg-status-neutral-soft text-text-secondary border border-status-neutral-soft",
+          "bg-status-neutral-soft text-text-secondary border border-transparent",
         success:
           "bg-status-success-soft text-status-success border border-status-success/20",
         warning:
@@ -42,7 +45,6 @@ export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {
   icon?: React.ReactNode;
-  /** Render a small dot before the label (status indicator). */
   dot?: boolean;
 }
 

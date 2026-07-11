@@ -8,3 +8,7 @@ export * from "./Field";
 export * from "./Input";
 export * from "./Toggle";
 export * from "./Progress";
+export * from "./Table";
+export * from "./Dialog";
+export * from "./Navigation";
+export * from "./icons";

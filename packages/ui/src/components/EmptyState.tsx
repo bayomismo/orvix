@@ -4,18 +4,23 @@ import { cn } from "../lib/cn";
 import { Button } from "./Button";
 
 /**
- * EmptyState — Phase 0.
+ * EmptyState — ORVIX Design System v1.0.
  *
- * Three shapes per PRD §08 §10:
- *   - `firstTime` (with illustration placeholder, inviting tone)
- *   - `cleaned` (plain "All clear")
- *   - `filtered` (with "Clear filters" CTA)
- *   - `empty` (compact — for inline empty areas like a comment list)
+ * Four shapes:
+ *   - `firstTime` — full empty state with optional illustration + CTA
+ *   - `cleaned`   — calm "all clear" empty state
+ *   - `filtered`  — empty state with "Clear filters" CTA
+ *   - `inline`    — compact for inline empty areas
  *
  * Composition law: the CTA is an action, never "Learn more".
+ * Every empty state must give the user a next step.
  */
 export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
-  shape?: "firstTime" | "cleaned" | "filtered" | "empty";
+  /**
+   * The v1.0 names. "empty" is preserved as an alias for "inline"
+   * for backward compatibility with v0.3 call sites.
+   */
+  shape?: "firstTime" | "cleaned" | "filtered" | "inline" | "empty";
   icon?: React.ReactNode;
   title: string;
   description?: string;
@@ -37,7 +42,8 @@ export function EmptyState({
   className,
   ...props
 }: EmptyStateProps) {
-  if (shape === "empty") {
+  // "empty" was the v0.3 alias for the compact inline shape.
+  if (shape === "inline" || shape === "empty") {
     return (
       <div
         className={cn(
@@ -53,31 +59,28 @@ export function EmptyState({
       </div>
     );
   }
+
+  const isFiltered = shape === "filtered";
+
   return (
     <div
       className={cn(
         "flex flex-col items-center justify-center text-center gap-4",
-        "rounded-lg border border-dashed border-surface-divider bg-surface-canvas/50 p-10",
+        "rounded-md border border-dashed border-surface-divider bg-surface-canvas/50 p-10",
         className,
       )}
       {...props}
     >
-      {shape === "firstTime" ? (
-        icon ?? (
-          <div
-            aria-hidden="true"
-            className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-elevated border border-surface-divider text-text-muted shadow-1"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </div>
-        )
+      {icon ? (
+        <div
+          aria-hidden="true"
+          className="flex h-12 w-12 items-center justify-center rounded-md bg-surface-elevated border border-surface-divider text-text-muted shadow-1"
+        >
+          {icon}
+        </div>
       ) : null}
       <div className="flex flex-col gap-1.5 max-w-sm">
-        <h3 className="text-lg font-semibold tracking-tight text-text-primary">
-          {title}
-        </h3>
+        <h3 className="text-lg font-semibold tracking-tight text-text-primary">{title}</h3>
         {description ? (
           <p className="text-sm text-text-secondary leading-relaxed">{description}</p>
         ) : null}
@@ -85,7 +88,7 @@ export function EmptyState({
       {(ctaLabel && onCta) || (secondaryLabel && onSecondary) ? (
         <div className="flex items-center gap-2">
           {ctaLabel && onCta ? (
-            <Button variant={shape === "filtered" ? "secondary" : "primary"} onClick={onCta}>
+            <Button variant={isFiltered ? "secondary" : "primary"} onClick={onCta}>
               {ctaLabel}
             </Button>
           ) : null}

@@ -5,28 +5,22 @@ import * as React from "react";
 import { cn } from "../lib/cn";
 
 /**
- * Sidebar — Phase 0 stable navigation shell.
+ * Sidebar — ORVIX Design System v1.0.
  *
- * Per PRD §04 §3 (v0.2 reversal): the sidebar shows the *same 7*
- * destinations, in the *same order*, every session. Smart nav lives
- * in ⌘K, not here.
- *
- * Phase 0 accepts a list of destinations and renders them as
- * straightforward links. Phase 1 adds the active-state highlight,
- * keyboard navigation, and persisted collapsed-state.
+ * Phase 0 component; replaced by the floating glass sidebar in M3
+ * (AppShell). This is a v1.0-token refresh so the existing routes
+ * keep compiling during the M2 → M3 transition.
  */
 export interface SidebarDestination {
   key: string;
   label: string;
   href: string;
   icon?: React.ReactNode;
-  /** v0.2: optional badge for unread / pending. */
   badge?: number | string;
 }
 
 export interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
   destinations: readonly SidebarDestination[];
-  /** Active route key — used for aria-current and visual highlight. */
   activeKey?: string;
 }
 
@@ -56,7 +50,7 @@ export const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-2 px-2 py-2 rounded-sm text-sm",
-                    "transition-colors duration-fast ease-snappy",
+                    "transition-colors duration-fast ease-out-quint",
                     isActive
                       ? "bg-surface-elevated text-text-primary"
                       : "text-text-secondary hover:bg-surface-elevated hover:text-text-primary",

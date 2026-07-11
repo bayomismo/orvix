@@ -3,21 +3,17 @@ import * as React from "react";
 import { cn } from "../lib/cn";
 
 /**
- * Skeleton — Phase 0. Loading-state primitive.
+ * Skeleton — ORVIX Design System v1.0.
  *
- * Per PRD §08 §10:
- *   - < 200ms: do nothing
- *   - 200–1000ms: skeleton, no spinner
- *   - 1–5s: skeleton + progress label
- *   - > 5s: progress label + cancel option
- *
- * Phase 0 ships the shape; specific label / cancel UI lives in the
- * composition layer.
+ * Per spec, skeletons are the only loading state. No spinners.
+ * Mirror the actual layout 1:1.
  */
 export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: string;
   height?: string;
   rounded?: boolean;
+  /** Use a circle (e.g. avatar). */
+  circle?: boolean;
 }
 
 export function Skeleton({
@@ -25,13 +21,15 @@ export function Skeleton({
   width,
   height,
   rounded,
+  circle,
   ...props
 }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "bg-surface-canvas animate-pulse",
-        rounded ? "rounded-full" : "rounded-xs",
+        "bg-surface-elevated",
+        "animate-pulse",
+        circle ? "rounded-full" : rounded ? "rounded-md" : "rounded-xs",
         className,
       )}
       style={{ width, height }}

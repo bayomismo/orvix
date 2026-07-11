@@ -4,22 +4,24 @@ import * as React from "react";
 import { cn } from "../lib/cn";
 
 /**
- * Field — label + description + control wrapper. Token-driven, accessible.
+ * Field — ORVIX Design System v1.0.
+ *
+ * Composable label + description + error + control wrapper. Token
+ * colors only, accessible (label is `for`-bound via id or Radix
+ * Slot), responsive.
  */
-export const Field = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { tone?: "default" | "muted" }
->(({ className, tone = "default", ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "flex flex-col gap-1.5",
-      tone === "muted" && "opacity-80",
-      className,
-    )}
-    {...props}
-  />
-));
+export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
+  tone?: "default" | "muted";
+}
+export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
+  ({ className, tone = "default", ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn("flex flex-col gap-1.5", tone === "muted" && "opacity-80", className)}
+      {...props}
+    />
+  ),
+);
 Field.displayName = "Field";
 
 export const FieldLabel = React.forwardRef<
@@ -28,10 +30,7 @@ export const FieldLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <label
     ref={ref}
-    className={cn(
-      "text-sm font-medium text-text-primary tracking-tight",
-      className,
-    )}
+    className={cn("text-sm font-medium text-text-primary tracking-tight", className)}
     {...props}
   />
 ));

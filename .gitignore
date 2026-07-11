@@ -43,3 +43,6 @@ packages/db/.neon/
 
 # Turbo cache outputs
 .turbo/cache/
+
+# GitHub Actions workflow (PAT lacks workflow scope; re-add from local clone)
+.github/workflows/
