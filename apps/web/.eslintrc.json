@@ -1,0 +1,22 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@orvix/db/client/raw",
+            "message": "@orvix/db/client/raw is for migrations & system jobs only. Use @orvix/db from feature code."
+          }
+        ]
+      }
+    ]
+  },
+  "ignorePatterns": [".next", "node_modules"]
+}

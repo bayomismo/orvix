@@ -1,0 +1,712 @@
+// ORVIX — Prisma schema
+//
+// v0.2 baseline. Frozen. Any change is an RFC.
+//
+// Conventions:
+//   - Every tenant-scoped table has a `workspace_id` column. The Prisma
+//     client extension (this package) refuses to issue queries without it.
+//   - 7 built-in Work Item types are seeded. Additional types are added by
+//     workspace users via the AI Engine / DNA Engine with no migration
+//     needed (they use only `custom_fields` JSONB).
+//   - `tenantClass` is on every Workspace row from day one to support
+//     forward sharding without a future migration.
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["postgresqlExtensions", "fullTextSearch"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  // pgvector is declared here for documentation; on Neon it must be
+  // enabled via the dashboard's "allowed extensions" list before the
+  // push succeeds. Until then, we only install pgcrypto at the schema
+  // level (the embedding columns use `Unsupported("vector(1536)")` and
+  // are managed by raw SQL once pgvector is enabled).
+  extensions = [pgcrypto]
+}
+
+// Note: in the Minimax cloud workspace, the secret is named
+// NEON_DATABASE_URL. The factory below aliases the two names so
+// `prisma db push` and runtime both work without a redeploy.
+
+// -----------------------------------------------------------------------------
+// Identity & access
+// -----------------------------------------------------------------------------
+
+enum TenantClass {
+  shared
+  dedicated
+  regional
+}
+
+enum WorkspaceStatus {
+  pending
+  composing
+  verifying
+  live
+  paused
+}
+
+model Workspace {
+  id                        String          @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  slug                      String          @unique
+  name                      String
+  organizationId            String?         @db.Uuid
+  organization              Organization?   @relation(fields: [organizationId], references: [id])
+  ownerUserId               String          @db.Uuid
+  ownerUser                 User            @relation("WorkspaceOwner", fields: [ownerUserId], references: [id])
+
+  // v0.2: forward-shard prep. All v1 workspaces are 'shared'.
+  tenantClass               TenantClass     @default(shared)
+
+  // v0.2: explicit cross-tenant pattern consent at onboarding. Default OFF.
+  crossTenantLearning       Boolean         @default(false)
+  crossTenantConsentAt      DateTime?
+  crossTenantConsentSurface String?
+
+  region                    String          @default("us-east")
+  plan                      String          @default("free")
+  status                    WorkspaceStatus @default(pending)
+
+  liveDnaVersionId          String?         @db.Uuid
+  effectiveDnaSnapshot      Json            @default("{}")
+
+  createdAt                 DateTime        @default(now())
+
+  users                     User[]
+  roles                     Role[]
+  workItems                 WorkItem[]
+  workItemTypes             WorkItemType[]
+  sessions                  Session[]
+  aiAssistantConfig         AIAssistantConfig?
+  aiRoutingProfiles         AIRoutingProfile[]
+  dnaVersions               BusinessDnaVersion[]
+  automations               Automation[]
+  automationRuns            AutomationRun[]
+  attachmentReviews         AttachmentReview[]
+  attachments               Attachment[]
+  auditLogs                 AuditLog[]
+  comments                  Comment[]
+  commentMentions           CommentMention[]
+  activities                Activity[]
+  relations                 WorkItemRelation[] @relation("RelationSource")
+  permissions               RolePermissionGrant[]
+  aiRuns                    AIRun[]
+  aiMemoryEntries           AIMemoryEntry[]
+
+  @@index([tenantClass, status])
+  @@index([status])
+}
+
+model Organization {
+  id          String      @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name        String
+  workspaces  Workspace[]
+  createdAt   DateTime    @default(now())
+}
+
+enum RoleKey {
+  owner
+  admin
+  operator
+  member
+  viewer
+  ai_assistant
+}
+
+model User {
+  id                       String          @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId               String          @db.Uuid
+  workspace                 Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  email                     String
+  displayName               String
+  avatarUrl                 String?
+  primaryRoleId             String          @db.Uuid
+  primaryRole               Role            @relation("UserPrimaryRole", fields: [primaryRoleId], references: [id])
+
+  // v0.2: KMS-versioned pepper support.
+  passwordHash              String?
+  passwordPepperVersion     Int             @default(1)
+  mfaEnrolled               Boolean         @default(false)
+
+  status                    String          @default("active")
+  lastSeenAt                DateTime?
+
+  createdAt                 DateTime        @default(now())
+  deletedAt                 DateTime?
+
+  primaryWorkspaceOf        Workspace[]     @relation("WorkspaceOwner")
+  ownedWorkItems            WorkItem[]
+  authoredComments          Comment[]       @relation("CommentAuthor")
+  uploadedAttachments       Attachment[]
+  rolePermissionGrants      RolePermissionGrant[] @relation("RoleGrantCreatedBy")
+  sessions                  Session[]
+  automationRunsAuthored    AutomationRun[]
+  aiRuns                    AIRun[]
+  aiApprovals               AIRun[]         @relation("AIRunApprover")
+  commentMentions           CommentMention[]
+  auditLogsAsActor          AuditLog[]      @relation("AuditActor")
+
+  @@unique([workspaceId, email])
+  @@index([workspaceId, deletedAt])
+}
+
+model Role {
+  id            String     @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId    String     @db.Uuid
+  workspace      Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  key            String     // 'owner' | 'admin' | 'operator' | 'member' | 'viewer' | 'ai_assistant' | custom
+  name           String
+  isSystem       Boolean    @default(false)
+  config         Json       @default("{}")
+  createdAt      DateTime   @default(now())
+
+  primaryOfUsers User[]     @relation("UserPrimaryRole")
+  grants         RolePermissionGrant[]
+  aiEmployees    AIAssistantConfig[]
+
+  @@unique([workspaceId, key])
+}
+
+model Permission {
+  id          String      @id // e.g. 'work_item.read', 'work_item.delete', 'automation.edit'
+  description String
+  surface     String      // e.g. 'work_item', 'ai_assistant', 'automation', 'admin'
+
+  grants      RolePermissionGrant[]
+}
+
+model RolePermissionGrant {
+  id            String     @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId    String     @db.Uuid
+  workspace      Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  roleId         String     @db.Uuid
+  role           Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId   String
+  permission     Permission @relation(fields: [permissionId], references: [id])
+  scope          Json       @default("{}")
+  createdByUserId String?    @db.Uuid
+  createdBy      User?      @relation("RoleGrantCreatedBy", fields: [createdByUserId], references: [id])
+  createdAt      DateTime   @default(now())
+
+  @@unique([workspaceId, roleId, permissionId])
+  @@index([workspaceId, roleId])
+}
+
+model Session {
+  id            String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId    String    @db.Uuid
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId         String    @db.Uuid
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fingerprint    String
+  ip             String?
+  userAgent      String?
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([workspaceId, userId, expiresAt])
+}
+
+// -----------------------------------------------------------------------------
+// Business DNA (append-only)
+// -----------------------------------------------------------------------------
+
+enum DnaStatus {
+  draft
+  verified
+  live
+  superseded
+  rolled_back
+}
+
+model BusinessDnaVersion {
+  id            String     @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId    String     @db.Uuid
+  workspace      Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  version        Int
+  status         DnaStatus
+  document       Json
+  inferredAt     DateTime   @default(now())
+  inferredBy     String     // 'engine' | 'manual:<userId>' | 'reset'
+  createdAt      DateTime   @default(now())
+
+  @@unique([workspaceId, version])
+  @@index([workspaceId, version])
+}
+
+// -----------------------------------------------------------------------------
+// Polymorphic Work Item engine
+//   - 7 built-in types seeded (key per row)
+//   - Custom (workspace-defined) types use only `custom_fields` JSONB
+//   - Built-in types get extension tables for indexable type-specific fields
+// -----------------------------------------------------------------------------
+
+model WorkItemType {
+  id           String      @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId   String      @db.Uuid
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  key           String      // 'customer' | 'deal' | 'project' | 'task' | 'conversation' | 'document' | 'request' | <custom>
+  name          String
+  icon          String?
+  schema        Json        // JSON Schema / Zod-compiled schema for type-specific custom_fields validation
+  composes      Json        @default("{}")
+  builtIn       Boolean     @default(false)
+  archivedAt    DateTime?
+  createdAt     DateTime    @default(now())
+
+  workItems     WorkItem[]
+
+  @@unique([workspaceId, key])
+}
+
+enum WorkItemPriority {
+  p0
+  p1
+  p2
+  p3
+}
+
+model WorkItem {
+  id               String         @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId       String         @db.Uuid
+  workspace         Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  typeId            String         @db.Uuid
+  type              WorkItemType   @relation(fields: [typeId], references: [id])
+  typeKey           String         // denormalized from work_item_types.key for index-only scans
+  displayId         String         // human-readable, e.g. "WS-1042"
+
+  title             String
+  summary           String?
+  status            String         // canonicalized per type
+  priority          WorkItemPriority?
+
+  ownerUserId       String?        @db.Uuid
+  ownerUser         User?          @relation(fields: [ownerUserId], references: [id])
+  ownerAiRole       String?        // 'sales' | 'support' | etc. — when an AI Assistant profile owns the item
+
+  parentId          String?        @db.Uuid
+  parent            WorkItem?      @relation("WorkItemParent", fields: [parentId], references: [id])
+  children          WorkItem[]     @relation("WorkItemParent")
+
+  source            String?        // 'email' | 'slack' | 'manual' | 'automation:<id>' | 'ai:<role>'
+  sourceRef         Json?
+
+  properties        Json           @default("{}")
+  customFields      Json           @default("{}")
+  permissions       Json           @default("{}")
+
+  aiSummary         String?
+  aiSuggestion      Json?
+
+  smartProperties   Json           @default("{}")
+
+  // v0.2: pgvector 1536-dim embeddings. v1 cost reality check: see PRD §06.
+  // At ~10k items per 1k workspaces, embeddings + HNSW index ~5–10 GB per
+  // 100k workspaces. Move to managed vector service in Phase 3+.
+  // TEMPORARILY DISABLED: requires the `pgvector` extension which is not
+  // in this Neon project's allowed extensions list. Re-enable by
+  // uncommenting this line AND adding `pgvector` to the Neon's
+  // allowed_extensions (Project Settings → Compute & Storage →
+  // Allowed extensions).
+  // embedding         Unsupported("vector(1536)")?
+
+  createdByUserId   String?        @db.Uuid
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @default(now())
+  deletedAt         DateTime?
+
+  activities        Activity[]
+  comments          Comment[]
+  attachments       Attachment[]
+  relations         WorkItemRelation[] @relation("RelationSource")
+  relationsTarget   WorkItemRelation[] @relation("RelationTarget")
+  aiRuns            AIRun[]
+
+  customer          WorkItemCustomer?
+  deal              WorkItemDeal?
+  project           WorkItemProject?
+  task              WorkItemTask?
+  conversation      WorkItemConversation?
+  document          WorkItemDocument?
+  request           WorkItemRequest?
+
+  @@unique([workspaceId, displayId])
+  @@index([workspaceId, typeKey, status, updatedAt])
+  @@index([workspaceId, ownerUserId, status])
+  @@index([workspaceId, ownerAiRole, status])
+}
+
+// v0.2: 7 built-in extension tables for indexable type-specific fields.
+// Custom (workspace-defined) Work Item types use JSONB custom_fields only.
+
+model WorkItemCustomer {
+  workItemId      String    @id @db.Uuid
+  workItem        WorkItem  @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  legalName       String
+  domain          String?
+  arrUSD          Decimal?  @db.Decimal(14, 2)
+  stage           String?
+  industry        String?
+  employeeCount   Int?
+  source          String?   // 'intake' | 'cold_outbound' | 'referral' | ...
+  enrichedAt      DateTime?
+
+  @@index([stage])
+}
+
+model WorkItemDeal {
+  workItemId  String   @id @db.Uuid
+  workItem    WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  amountUSD   Decimal? @db.Decimal(14, 2)
+  stage       String?
+  probability Decimal? @db.Decimal(4, 3)
+  closedAt    DateTime?
+
+  @@index([stage])
+}
+
+model WorkItemProject {
+  workItemId    String    @id @db.Uuid
+  workItem      WorkItem  @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  startDate     DateTime?
+  dueDate       DateTime?
+  budgetUSD     Decimal?  @db.Decimal(14, 2)
+  health        String?   // 'on_track' | 'at_risk' | 'off_track'
+}
+
+model WorkItemTask {
+  workItemId   String    @id @db.Uuid
+  workItem     WorkItem  @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  dueDate      DateTime?
+  estimateMin  Int?
+  blockedBy    Json      @default("[]")
+}
+
+model WorkItemConversation {
+  workItemId    String   @id @db.Uuid
+  workItem      WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  channel       String?  // 'email' | 'meeting' | 'phone' | 'chat'
+  subject       String?
+  participants  Json     @default("[]")
+  startedAt     DateTime?
+  endedAt       DateTime?
+  transcriptKey String?
+}
+
+model WorkItemDocument {
+  workItemId   String   @id @db.Uuid
+  workItem     WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  storageKey   String
+  mimeType     String
+  sizeBytes    BigInt
+  state        String?  // 'draft' | 'sent' | 'signed' | 'archived'
+  expiresAt    DateTime?
+}
+
+model WorkItemRequest {
+  workItemId  String   @id @db.Uuid
+  workItem    WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  category    String?  // 'ticket' | 'approval' | 'vacation' | 'bug' | etc.
+  severity    String?
+  assignedUserId String? @db.Uuid
+}
+
+// Generic activity / comments / relations / attachments
+model Activity {
+  id           String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId   String   @db.Uuid
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workItemId   String   @db.Uuid
+  workItem     WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  actorUserId  String?  @db.Uuid
+  actorAiRole  String?
+  verb         String   // 'created' | 'status_changed' | 'commented' | ...
+  target       Json?
+  payload      Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@index([workspaceId, workItemId, createdAt])
+}
+
+model Comment {
+  id           String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId   String   @db.Uuid
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workItemId   String   @db.Uuid
+  workItem     WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  authorUserId String?  @db.Uuid
+  authorUser   User?    @relation("CommentAuthor", fields: [authorUserId], references: [id])
+  authorAiRole String?
+  body         String
+  attachments  Json     @default("[]")
+  editedAt     DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  mentions     CommentMention[]
+}
+
+model CommentMention {
+  workspaceId      String   @db.Uuid
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  commentId        String   @db.Uuid
+  comment          Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUserId  String   @db.Uuid
+  mentionedUser    User     @relation(fields: [mentionedUserId], references: [id])
+  createdAt        DateTime @default(now())
+
+  @@id([workspaceId, commentId, mentionedUserId])
+  @@index([workspaceId, mentionedUserId])
+}
+
+model Attachment {
+  id               String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId       String   @db.Uuid
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workItemId       String?  @db.Uuid
+  workItem         WorkItem? @relation(fields: [workItemId], references: [id], onDelete: SetNull)
+  uploaderUserId   String?  @db.Uuid
+  uploaderUser     User?     @relation(fields: [uploaderUserId], references: [id])
+  uploaderAiRole   String?
+  storageKey       String
+  fileName         String
+  mimeType         String
+  sizeBytes        BigInt
+  sha256           String
+  scanStatus       String   @default("pending") // pending | clean | infected | error
+  scanCompletedAt  DateTime?
+  previewKey       String?
+  createdAt        DateTime @default(now())
+
+  reviews          AttachmentReview[]
+}
+
+model AttachmentReview {
+  id            String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId    String   @db.Uuid
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  attachmentId   String   @db.Uuid
+  attachment     Attachment @relation(fields: [attachmentId], references: [id])
+  result         String   // 'released' | 'blocked' | 'deleted'
+  reason         String?
+  reviewedByUser String   @db.Uuid
+  reviewedAt     DateTime @default(now())
+}
+
+model WorkItemRelation {
+  workspaceId   String    @db.Uuid
+  workspace     Workspace @relation("RelationSource", fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceId      String    @db.Uuid
+  source        WorkItem  @relation("RelationSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  relation      String    // 'blocks' | 'duplicates' | 'relates_to' | 'parent_of'
+  targetId      String    @db.Uuid
+  target        WorkItem  @relation("RelationTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+
+  @@id([workspaceId, sourceId, relation, targetId])
+  @@index([workspaceId, targetId])
+}
+
+// -----------------------------------------------------------------------------
+// AI Assistant (one per workspace + 8 internal role-bound routing profiles)
+// -----------------------------------------------------------------------------
+
+enum AiAutonomyLevel {
+  suggest_only
+  suggest_and_act_low_risk
+}
+
+enum AiTonePreset {
+  warm_concise
+  concise_direct
+  warm_empathetic
+}
+
+model AIAssistantConfig {
+  id              String              @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId      String              @unique @db.Uuid
+  workspace        Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  displayName      String              @default("AI Assistant")
+  tonePreset       AiTonePreset
+  autonomyLevel    AiAutonomyLevel
+  roleRoleId       String              @db.Uuid
+  role             Role                @relation(fields: [roleRoleId], references: [id])
+  config           Json                @default("{}")
+  status           String              @default("active")
+  createdAt        DateTime            @default(now())
+
+  routingProfiles  AIRoutingProfile[]
+  aiRuns           AIRun[]
+  aiMemoryEntries  AIMemoryEntry[]
+}
+
+model AIRoutingProfile {
+  id              String             @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId      String             @db.Uuid
+  workspace        Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  aiAssistantId   String             @db.Uuid
+  aiAssistant     AIAssistantConfig  @relation(fields: [aiAssistantId], references: [id], onDelete: Cascade)
+  role            String             // 'ceo' | 'sales' | 'support' | 'finance' | 'hr' | 'operations' | 'marketing' | 'legal'
+  enabled         Boolean            @default(true)
+  tone            String
+  toolAllowList   String[]
+  autonomyOverride AiAutonomyLevel?
+  createdAt       DateTime           @default(now())
+
+  @@unique([aiAssistantId, role])
+}
+
+enum AiRunKind {
+  suggestion
+  draft
+  action
+  summary
+  briefing
+  inference
+}
+
+enum AiRunStatus {
+  queued
+  running
+  succeeded
+  failed
+  denied_by_policy
+  awaiting_approval
+}
+
+enum AiRunModelTier {
+  fast
+  medium
+  heavy
+}
+
+model AIRun {
+  id                String             @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId       String             @db.Uuid
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  aiAssistantId     String             @db.Uuid
+  aiAssistant       AIAssistantConfig  @relation(fields: [aiAssistantId], references: [id], onDelete: Cascade)
+  routingProfile    String?
+  userId            String?            @db.Uuid
+  user              User?              @relation(fields: [userId], references: [id])
+  workItemId        String?            @db.Uuid
+  workItem          WorkItem?          @relation(fields: [workItemId], references: [id])
+  conversationId    String?            @db.Uuid
+  kind              AiRunKind
+  status            AiRunStatus
+  modelTier         AiRunModelTier
+  verifierUsed      Boolean            @default(false)
+  verifierResult    Json?
+  inputTokens       Int?
+  outputTokens      Int?
+  costUSD           Decimal?           @db.Decimal(8, 6)
+  latencyMs         Int?
+  approvalDecision  String?            // 'approved' | 'edited' | 'rejected'
+  approvedByUserId  String?            @db.Uuid
+  approvedBy        User?              @relation("AIRunApprover", fields: [approvedByUserId], references: [id])
+  payload           Json               @default("{}")
+  result            Json?
+  error             String?
+  clientRequestId   String?            // Server Action idempotency linkage
+  createdAt         DateTime           @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, workItemId])
+  @@index([workspaceId, status])
+}
+
+enum AiMemoryLayer {
+  short_term
+  long_term
+  organizational
+}
+
+model AIMemoryEntry {
+  id              String             @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId      String             @db.Uuid
+  workspace        Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  aiAssistantId   String             @db.Uuid
+  aiAssistant     AIAssistantConfig  @relation(fields: [aiAssistantId], references: [id], onDelete: Cascade)
+  layer            AiMemoryLayer
+  scope            String             // 'work_item:<id>' | 'user:<id>' | 'workspace'
+  key              String
+  value            Json
+  ttl              Int?
+  // See WorkItem.embedding for the note about pgvector being disabled.
+  // embedding        Unsupported("vector(1536)")?
+  createdAt        DateTime           @default(now())
+
+  @@index([workspaceId, aiAssistantId, scope, key])
+}
+
+// -----------------------------------------------------------------------------
+// Automations
+// -----------------------------------------------------------------------------
+
+model Automation {
+  id             String          @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId     String          @db.Uuid
+  workspace       Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  trigger        Json
+  conditions     Json            @default("[]")
+  actions        Json            @default("[]")
+  enabled        Boolean         @default(true)
+  aiGenerated    Boolean         @default(false)
+  createdByUserId String?         @db.Uuid
+  budgetUSDPerDay Decimal?        @db.Decimal(8, 4)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  runs           AutomationRun[]
+}
+
+model AutomationRun {
+  id              String     @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId      String     @db.Uuid
+  workspace        Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  automationId     String     @db.Uuid
+  automation       Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  startedAt        DateTime   @default(now())
+  finishedAt       DateTime?
+  status           String
+  trace            Json?
+  costUSD          Decimal?   @db.Decimal(8, 6)
+  triggeredByUserId String?   @db.Uuid
+  triggeredBy      User?      @relation(fields: [triggeredByUserId], references: [id])
+
+  @@index([workspaceId, automationId, startedAt])
+}
+
+// -----------------------------------------------------------------------------
+// Audit log (append-only + externally notarized)
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id            String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  workspaceId    String   @db.Uuid
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actorUserId   String?  @db.Uuid
+  actorUser     User?    @relation("AuditActor", fields: [actorUserId], references: [id])
+  actorAiRole   String?
+  ip            String?
+  userAgent     String?
+  action        String
+  targetType    String?
+  targetId      String?  @db.Uuid
+  payload       Json     @default("{}")
+  requestId     String?  // Server Action clientRequestId linkage
+  rootHash      String?  // v0.2: Merkle-style hash chain for external notarization
+  createdAt     DateTime @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, action])
+}

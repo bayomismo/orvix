@@ -1,0 +1,31 @@
+{
+  "name": "@orvix/schemas",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Zod schemas and JSON schemas for the polymorphic engine. Domain-truth.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dna": "./src/dna.ts",
+    "./work-item": "./src/work-item.ts",
+    "./ai": "./src/ai.ts",
+    "./server-action": "./src/server-action.ts",
+    "./schemas/dna.v1.json": "./src/json/dna.v1.json",
+    "./schemas/intake-bank.v1.json": "./src/json/intake-bank.v1.json"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@orvix/config": "workspace:*",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.6"
+  },
+  "scripts": {
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx --config ../../.eslintrc.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc"
+  }
+}

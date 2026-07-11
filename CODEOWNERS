@@ -1,0 +1,28 @@
+# CODEOWNERS — ORVIX
+#
+# Each top-level path is owned by the named role. PRs that touch a path
+# require approval from the owner listed before merge.
+
+# Default to founding-team-wide review
+*                                               @orvix/founding-team
+
+# Architecture / load-bearing docs
+/packages/db/                                   @orvix/cto @orvix/data-platform
+/packages/schemas/                              @orvix/cto
+/packages/ai-runtime/                           @orvix/ai
+/apps/ai/                                       @orvix/ai @orvix/cto
+
+# Security
+/packages/db/src/migrations/                    @orvix/data-platform @orvix/cto
+/apps/web/src/server/                           @orvix/data-platform @orvix/cto
+
+# Product UX / IA
+/packages/ui/                                   @orvix/design @orvix/app
+/packages/config/                               @orvix/design
+/apps/web/src/features/                         @orvix/app @orvix/design
+
+# Apps
+/apps/                                          @orvix/app
+
+# Marketing site (separate ownership)
+/apps/web/src/app/\(marketing\)/                @orvix/design

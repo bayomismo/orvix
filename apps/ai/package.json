@@ -1,0 +1,29 @@
+{
+  "name": "@orvix/ai",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AI service: planner + verifier + approver + DNA Engine. Exposes gRPC + HTTP/SSE.",
+  "type": "module",
+  "scripts": {
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx --config ../../.eslintrc.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts"
+  },
+  "dependencies": {
+    "@orvix/ai-runtime": "workspace:*",
+    "@orvix/config": "workspace:*",
+    "@orvix/db": "workspace:*",
+    "@orvix/schemas": "workspace:*",
+    "@orvix/utils": "workspace:*",
+    "fastify": "^5.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.6"
+  }
+}

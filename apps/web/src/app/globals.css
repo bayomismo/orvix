@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: var(--surface-divider);
+  }
+
+  html {
+    font-feature-settings: "cv11", "ss01", "cv09";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--text-primary);
+    background: var(--surface-canvas);
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: var(--brand-accent-soft);
+    color: var(--brand-accent);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Scrollbar — subtle, premium */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--neutral-200);
+    border-radius: var(--radius-full);
+    border: 2px solid var(--surface-canvas);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--neutral-300);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: var(--neutral-300);
+    border-color: var(--surface-canvas);
+  }
+
+  /* Selection in dark mode */
+  .dark ::selection {
+    background: var(--brand-accent-soft);
+    color: var(--brand-accent);
+  }
+}
+
+@layer components {
+  /* Premium card with subtle hover lift */
+  .orvix-card {
+    @apply rounded-lg border border-surface-divider bg-surface-elevated shadow-1;
+  }
+  .orvix-card-hover {
+    @apply transition-all duration-fast ease-snappy hover:border-surface-divider-strong hover:shadow-2;
+  }
+  .orvix-card-interactive {
+    @apply transition-all duration-fast ease-snappy hover:-translate-y-px hover:border-surface-divider-strong hover:shadow-2;
+  }
+
+  /* Subtle ring on focus for interactive cards */
+  .orvix-focus-ring:focus-visible {
+    @apply outline-none ring-2 ring-brand-accent ring-offset-2 ring-offset-surface-canvas;
+  }
+
+  /* Tabular numbers for everything that counts */
+  .orvix-numeric {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  /* Hairline borders */
+  .border-hairline {
+    border-width: 0.5px;
+  }
+  /* Subtle gradient backgrounds for hero areas */
+  .bg-hero-glow {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, var(--highlight-1), transparent 70%),
+      var(--surface-canvas);
+  }
+  .dark .bg-hero-glow {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, var(--highlight-1), transparent 70%),
+      var(--surface-canvas);
+  }
+  /* Premium text balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Smooth scroll for the page */
+  .scroll-smooth-y {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}

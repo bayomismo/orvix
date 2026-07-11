@@ -1,0 +1,109 @@
+# ORVIX — Continuous Integration
+#
+# This is the load-bearing CI workflow for Phase 0. The four jobs run in
+# sequence:
+#
+#   1. lint      — ESLint, Prettier, secret scan
+#   2. typecheck — `tsc --noEmit` across every workspace package
+#   3. test      — vitest run including the tenant-isolation tests
+#   4. build     — `pnpm build` (Turborepo)
+#
+# Branch protection requires all four jobs to be green before merge.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - name: secret scan
+        uses: gitleaks/gitleaks-action@v2
+
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: orvix_test
+          POSTGRES_USER: orvix
+          POSTGRES_PASSWORD: orvix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U orvix -d orvix_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://orvix:orvix@localhost:5432/orvix_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        run: |
+          pnpm --filter @orvix/db db:generate || true
+          PGPASSWORD=orvix psql -h localhost -U orvix -d orvix_test \
+            -f packages/db/src/migrations/0001_foundations/migration.sql || true
+      - name: Run tests
+        run: pnpm test
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build

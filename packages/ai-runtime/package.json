@@ -1,0 +1,35 @@
+{
+  "name": "@orvix/ai-runtime",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AI Assistant runtime: planner, verifier, tools, approver, memory.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./planner": "./src/planner.ts",
+    "./verifier": "./src/verifier.ts",
+    "./tools": "./src/tools/index.ts",
+    "./approver": "./src/approver.ts",
+    "./memory": "./src/memory.ts",
+    "./runtime": "./src/runtime.ts",
+    "./providers": "./src/providers/index.ts"
+  },
+  "dependencies": {
+    "@orvix/db": "workspace:*",
+    "@orvix/schemas": "workspace:*",
+    "@orvix/utils": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@orvix/config": "workspace:*",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.6"
+  },
+  "scripts": {
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx --config ../../.eslintrc.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc"
+  }
+}

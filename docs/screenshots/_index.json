@@ -1,0 +1,65 @@
+[
+  {
+    "name": "01-landing",
+    "path": "/",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/01-landing.png"
+  },
+  {
+    "name": "02-onboarding-step1",
+    "path": "/onboarding",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/02-onboarding-step1.png"
+  },
+  {
+    "name": "03-inbox",
+    "path": "/inbox",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/03-inbox.png"
+  },
+  {
+    "name": "04-work",
+    "path": "/work",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/04-work.png"
+  },
+  {
+    "name": "05-customers",
+    "path": "/customers",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/05-customers.png"
+  },
+  {
+    "name": "06-ai",
+    "path": "/ai",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/06-ai.png"
+  },
+  {
+    "name": "07-reports",
+    "path": "/reports",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/07-reports.png"
+  },
+  {
+    "name": "08-settings",
+    "path": "/settings",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/08-settings.png"
+  },
+  {
+    "name": "09-admin",
+    "path": "/admin",
+    "status": 200,
+    "title": "ORVIX",
+    "file": "/workspace/orvix/docs/screenshots/09-admin.png"
+  }
+]

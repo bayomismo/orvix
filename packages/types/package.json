@@ -1,0 +1,20 @@
+{
+  "name": "@orvix/types",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared TypeScript types only — no runtime code.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx --config ../../.eslintrc.cjs",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@orvix/config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@orvix/tooling",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Repo-level scripts and codegen helpers.",
+  "type": "module",
+  "scripts": {
+    "lint": "echo \"no lint in tooling yet\"",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "list-builtin-types": "tsx scripts/list-builtin-types.ts"
+  },
+  "dependencies": {
+    "@orvix/schemas": "workspace:*"
+  },
+  "devDependencies": {
+    "@orvix/config": "workspace:*",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

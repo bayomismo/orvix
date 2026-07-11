@@ -1,0 +1,31 @@
+{
+  "name": "@orvix/config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Design tokens, Tailwind preset, ESLint preset, shared config.",
+  "type": "module",
+  "exports": {
+    "./tailwind": "./tailwind/tailwind.config.ts",
+    "./tokens/tokens.css": "./tokens/tokens.css",
+    "./tokens/tokens.json": "./tokens/tokens.json",
+    "./eslint": "./eslint/index.cjs",
+    "./eslint/server": "./eslint/server.cjs",
+    "./eslint/react": "./eslint/react.cjs"
+  },
+  "files": [
+    "tokens",
+    "tailwind",
+    "eslint"
+  ],
+  "scripts": {
+    "lint": "echo \"@orvix/config has no lint\"",
+    "typecheck": "tsc --noEmit",
+    "build": "echo \"@orvix/config build is a no-op (configs are consumed at typecheck/transform time)\""
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^9.16.0",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3"
+  }
+}

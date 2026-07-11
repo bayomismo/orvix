@@ -1,0 +1,30 @@
+{
+  "name": "@orvix/storage",
+  "version": "0.0.1",
+  "private": true,
+  "description": "File storage abstraction (local + S3-compatible adapters) for ORVIX.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./local": "./src/local.ts",
+    "./s3": "./src/s3.ts",
+    "./factory": "./src/factory.ts"
+  },
+  "scripts": {
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx --config ../../.eslintrc.cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@orvix/utils": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.9"
+  }
+}
