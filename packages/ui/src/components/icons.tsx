@@ -232,3 +232,18 @@ export const LogOut = ({ size, className, ...p }: IconProps) => (
     <path d="M10 12H3M6 9l-3 3 3 3M10 3h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2" />
   </Svg>
 );
+
+export const CheckCircle = ({ size, className, ...p }: IconProps) => (
+  <Svg size={size} className={className} {...p}>
+    <circle cx="8" cy="8" r="6" />
+    <polyline points="5 8 7.5 10.5 11 6.5" />
+  </Svg>
+);
+
+export const XCircle = ({ size, className, ...p }: IconProps) => (
+  <Svg size={size} className={className} {...p}>
+    <circle cx="8" cy="8" r="6" />
+    <line x1="5.5" y1="5.5" x2="10.5" y2="10.5" />
+    <line x1="10.5" y1="5.5" x2="5.5" y2="10.5" />
+  </Svg>
+);
