@@ -1,16 +1,37 @@
 import Link from "next/link";
 
 import { PageHeader } from "@/components/PageHeader";
-import { Badge, EmptyState } from "@orvix/ui";
+import {
+  Badge,
+  EmptyState,
+  Card,
+  CardBody,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Filter,
+  Users,
+  Briefcase,
+  Folder,
+  CheckSquare,
+  Message,
+  File,
+  InboxTray,
+} from "@orvix/ui";
 import { BUILT_IN_WORK_ITEM_TYPES } from "@orvix/schemas";
+import type { WorkItemStatus, WorkItem } from "@/server/store";
 
 import { getSession } from "@/server/auth";
-import { db, type WorkItemStatus } from "@/server/store";
+import { db } from "@/server/store";
 import { CreateWorkItemButton } from "./CreateWorkItemButton";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = { type?: string };
+type SearchParams = {
+  type?: string;
+  status?: string;
+};
 
 const STATUS_LABEL: Record<WorkItemStatus, string> = {
   backlog: "Backlog",
@@ -54,16 +75,13 @@ const TYPE_LABEL: Record<string, string> = {
   request: "Request",
 };
 
-const TYPE_ICON: Record<string, string> = {
-  customer: "M16 11a4 4 0 10-8 0 4 4 0 008 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
-  deal: "M3 7h18M3 12h18M3 17h12",
-  project: "M3 7l9-4 9 4-9 4v10l-9 4-9-4V7z",
-  task: "M5 13l4 4L19 7",
-  conversation: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z",
-  document: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6",
-  request: "M3 8l9 6 9-6 M3 8v10a2 2 0 002 2h14a2 2 0 002-2V8",
-};
-
+/**
+ * Work — destination 2 of 7 (v1.0).
+ *
+ * v1.0 refresh: M2 Tabs for the type filter (animated underline,
+ * keyboard nav), M2 Card with elevation for the work list, M2
+ * icons for type glyphs, status filter chip row.
+ */
 export default async function WorkPage({
   searchParams,
 }: {
@@ -72,18 +90,40 @@ export default async function WorkPage({
   const s = await getSession();
   if (!s) return null;
   const sp = await searchParams;
-  const filterType = (sp.type ?? "all") as string;
+  const filterType = sp.type ?? "all";
+  const filterStatus = sp.status ?? "open";
 
   const all = [...db.workItems.values()].filter(
     (w) => w.workspaceId === s.workspace.id,
   );
+
+  // Status filter
+  const statusFiltered = all.filter((w) => {
+    if (filterStatus === "all") return true;
+    if (filterStatus === "open") return w.status !== "done" && w.status !== "archived";
+    if (filterStatus === "done") return w.status === "done";
+    return w.status === filterStatus;
+  });
+
+  // Type filter
   const items =
-    filterType === "all" ? all : all.filter((w) => w.typeKey === filterType);
+    filterType === "all"
+      ? statusFiltered
+      : statusFiltered.filter((w) => w.typeKey === filterType);
   items.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 
-  const counts = new Map<string, number>();
-  for (const t of BUILT_IN_WORK_ITEM_TYPES) counts.set(t, 0);
-  for (const w of all) counts.set(w.typeKey, (counts.get(w.typeKey) ?? 0) + 1);
+  // Counts (over the unfiltered set, scoped by status for "open" view)
+  const typeScope = filterStatus === "all" ? all : statusFiltered;
+  const typeCounts = new Map<string, number>();
+  for (const t of BUILT_IN_WORK_ITEM_TYPES) typeCounts.set(t, 0);
+  for (const w of typeScope) typeCounts.set(w.typeKey, (typeCounts.get(w.typeKey) ?? 0) + 1);
+
+  // Status counts
+  const statusCounts: Record<string, number> = {
+    all: all.length,
+    open: all.filter((w) => w.status !== "done" && w.status !== "archived").length,
+    done: all.filter((w) => w.status === "done").length,
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,136 +134,175 @@ export default async function WorkPage({
         actions={<CreateWorkItemButton />}
       />
 
-      <nav
-        aria-label="Work item type"
-        className="flex items-center gap-1 overflow-x-auto border-b border-surface-divider"
+      <Tabs
+        defaultValue={filterType}
+        key={`${filterType}-${filterStatus}`}
+        className="flex flex-col gap-5"
       >
-        <TypeTab href="/work" type="all" label="All" count={all.length} active={filterType === "all"} />
-        {BUILT_IN_WORK_ITEM_TYPES.map((t) => (
-          <TypeTab
-            key={t}
-            href={`/work?type=${t}`}
-            type={t}
-            label={TYPE_LABEL[t] ?? t}
-            count={counts.get(t) ?? 0}
-            active={filterType === t}
-          />
-        ))}
-      </nav>
+        <TabsList aria-label="Work item type" className="w-full overflow-x-auto">
+          <TypeTabTrigger value="all" label="All" count={typeScope.length} href={`/work?status=${filterStatus}`} />
+          {BUILT_IN_WORK_ITEM_TYPES.map((t) => (
+            <TypeTabTrigger
+              key={t}
+              value={t}
+              label={TYPE_LABEL[t] ?? t}
+              count={typeCounts.get(t) ?? 0}
+              href={`/work?type=${t}&status=${filterStatus}`}
+            />
+          ))}
+        </TabsList>
 
-      {items.length === 0 ? (
-        <EmptyState
-          shape="firstTime"
-          title={filterType === "all" ? "No work yet." : `No ${TYPE_LABEL[filterType]?.toLowerCase() ?? filterType} yet.`}
-          description="Create your first work item to get the engine running. Customers, deals, projects, tasks, conversations, documents, and requests all live here."
-        />
-      ) : (
-        <Card>
-          <ul className="divide-y divide-surface-divider">
-            {items.map((w) => {
-              const icon = TYPE_ICON[w.typeKey];
-              return (
-                <li key={w.id}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-2xs text-text-muted">
+            Showing <span className="orvix-numeric font-medium text-text-secondary">{items.length}</span>{" "}
+            {items.length === 1 ? "item" : "items"}
+            {filterType !== "all" ? <> in <span className="text-text-secondary">{TYPE_LABEL[filterType]}</span></> : null}
+          </p>
+          <div className="flex items-center gap-1">
+            <Filter size={12} className="text-text-muted" aria-hidden="true" />
+            <span className="text-2xs uppercase tracking-wider text-text-muted">Status</span>
+            <div className="flex items-center gap-1">
+              {[
+                { key: "open", label: "Open" },
+                { key: "done", label: "Done" },
+                { key: "all", label: "All" },
+              ].map((opt) => {
+                const active = filterStatus === opt.key;
+                return (
                   <Link
-                    href={`/work/${w.id}`}
-                    className="group flex items-center gap-4 px-5 py-3.5 transition-colors duration-fast ease-snappy hover:bg-surface-inset"
+                    key={opt.key}
+                    href={
+                      filterType === "all"
+                        ? `/work?status=${opt.key}`
+                        : `/work?type=${filterType}&status=${opt.key}`
+                    }
+                    className={
+                      "rounded-md px-2 py-0.5 text-2xs font-medium transition-colors duration-fast ease-out-quint " +
+                      (active
+                        ? "bg-surface-inset text-text-primary"
+                        : "text-text-muted hover:text-text-secondary")
+                    }
                   >
-                    <span
-                      aria-hidden="true"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-inset text-text-secondary transition-colors duration-fast ease-snappy group-hover:bg-surface-elevated group-hover:text-text-primary"
-                    >
-                      {icon ? (
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d={icon} />
-                        </svg>
-                      ) : null}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-text-primary">
-                        {w.title}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-2xs text-text-muted">
-                        <span className="capitalize">{w.typeKey}</span>
-                        <span aria-hidden="true">·</span>
-                        <span className="tabular-nums">#{w.id.slice(0, 6)}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>updated {timeAgo(w.updatedAt)}</span>
-                      </div>
-                    </div>
-                    <Badge tone={STATUS_TONE[w.status]} size="sm">
-                      {STATUS_LABEL[w.status]}
-                    </Badge>
-                    {w.priority === "high" || w.priority === "urgent" ? (
-                      <Badge tone={PRIORITY_TONE[w.priority]} size="sm">
-                        {PRIORITY_LABEL[w.priority]}
-                      </Badge>
-                    ) : null}
-                    <span
-                      aria-hidden="true"
-                      className="text-text-muted transition-transform duration-fast ease-snappy group-hover:translate-x-0.5"
-                    >
-                      →
-                    </span>
+                    {opt.label}
+                    <span className="ml-1 tabular-nums text-text-muted">{statusCounts[opt.key] ?? 0}</span>
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-      )}
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <TabsContent value={filterType} className="mt-0 focus-visible:outline-none">
+          {items.length === 0 ? (
+            <EmptyState
+              shape="firstTime"
+              title={filterType === "all" ? "No work yet." : `No ${TYPE_LABEL[filterType]?.toLowerCase() ?? filterType} yet.`}
+              description="Create your first work item to get the engine running. Customers, deals, projects, tasks, conversations, documents, and requests all live here."
+            />
+          ) : (
+            <Card elevation="flat" className="overflow-hidden">
+              <CardBody className="p-0">
+                <ul className="divide-y divide-surface-divider">
+                  {items.map((w) => (
+                    <WorkRow key={w.id} w={w} />
+                  ))}
+                </ul>
+              </CardBody>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-function TypeTab({
-  href,
+/** One work-item row, used inside the list. */
+function WorkRow({ w }: { w: WorkItem }) {
+  const Icon = TYPE_ICON[w.typeKey] ?? Users;
+  return (
+    <li>
+      <Link
+        href={`/work/${w.id}`}
+        className="group/row flex items-center gap-4 px-5 py-3.5 transition-colors duration-fast ease-out-quint hover:bg-surface-inset"
+      >
+        <span
+          aria-hidden="true"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-inset text-text-secondary transition-colors duration-fast ease-out-quint group-hover/row:bg-surface-elevated group-hover/row:text-text-primary"
+        >
+          <Icon size={14} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium text-text-primary">
+            {w.title}
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-2xs text-text-muted">
+            <span className="capitalize">{w.typeKey}</span>
+            <span aria-hidden="true">·</span>
+            <span className="tabular-nums">#{w.id.slice(0, 6)}</span>
+            <span aria-hidden="true">·</span>
+            <span>updated {timeAgo(w.updatedAt)}</span>
+          </div>
+        </div>
+        <Badge tone={STATUS_TONE[w.status]} size="sm">
+          {STATUS_LABEL[w.status]}
+        </Badge>
+        {w.priority === "high" || w.priority === "urgent" ? (
+          <Badge tone={PRIORITY_TONE[w.priority]} size="sm">
+            {PRIORITY_LABEL[w.priority]}
+          </Badge>
+        ) : null}
+        <span
+          aria-hidden="true"
+          className="text-text-muted transition-transform duration-fast ease-out-quint group-hover/row:translate-x-0.5"
+        >
+          →
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+/**
+ * TabsTrigger that renders as a Next Link (so the URL is the source
+ * of truth and there's a real page transition). We get the animated
+ * underline from Radix Tabs by using the `data-state` attribute on
+ * the child via clone.
+ */
+function TypeTabTrigger({
+  value,
   label,
   count,
-  active,
+  href,
 }: {
-  href: string;
-  type: string;
+  value: string;
   label: string;
   count: number;
-  active: boolean;
+  href: string;
 }) {
   return (
-    <Link
-      href={href}
-      className={
-        "group/tab relative flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors duration-fast ease-snappy " +
-        (active ? "text-text-primary" : "text-text-muted hover:text-text-secondary")
-      }
-    >
-      {label}
-      <span
-        className={
-          "rounded-md px-1.5 text-2xs font-medium tabular-nums " +
-          (active
-            ? "bg-surface-inset text-text-primary"
-            : "text-text-muted")
-        }
+    <TabsTrigger value={value} asChild>
+      <Link
+        href={href}
+        className="relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors duration-fast ease-out-quint data-[state=active]:text-text-primary after:absolute after:left-2 after:right-2 after:-bottom-px after:h-px after:bg-brand-accent after:scale-x-0 after:origin-center after:transition-transform after:duration-default after:ease-out-quint data-[state=active]:after:scale-x-100"
       >
-        {count}
-      </span>
-      <span
-        aria-hidden="true"
-        className={
-          "absolute inset-x-0 -bottom-px h-0.5 transition-colors duration-fast ease-snappy " +
-          (active ? "bg-text-primary" : "bg-transparent")
-        }
-      />
-    </Link>
+        {label}
+        <span className="rounded-md bg-surface-inset px-1.5 text-2xs font-medium tabular-nums text-text-muted">
+          {count}
+        </span>
+      </Link>
+    </TabsTrigger>
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-surface-divider bg-surface-elevated shadow-1">
-      {children}
-    </div>
-  );
-}
+const TYPE_ICON: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  customer: Users,
+  deal: Briefcase,
+  project: Folder,
+  task: CheckSquare,
+  conversation: Message,
+  document: File,
+  request: InboxTray,
+};
 
 function timeAgo(iso: string): string {
   const now = Date.now();

@@ -1,10 +1,17 @@
 import Link from "next/link";
 
 import { PageHeader } from "@/components/PageHeader";
-import { Badge, Button, Card, CardBody } from "@orvix/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  Clock,
+} from "@orvix/ui";
 import { getSession } from "@/server/auth";
 import { db } from "@/server/store";
 
+import { BlockedPanel } from "./BlockedPanel";
 import { QuickActions } from "./QuickActions";
 import { TodayFeed } from "./TodayFeed";
 import { ActivityRail } from "./ActivityRail";
@@ -12,17 +19,15 @@ import { ActivityRail } from "./ActivityRail";
 export const dynamic = "force-dynamic";
 
 /**
- * Inbox / Dashboard — v0.3.
+ * Inbox — destination 1 of 7 (v1.0).
  *
  * Three-region layout (Linear / Stripe convention):
  *   - Top: greeting + meta
- *   - Center: action surface (Today, AI briefing, Quick actions)
+ *   - Center: BlockedPanel → metric strip → Today feed → AI briefing → Quick actions
  *   - Right rail: status, activity, inbox
  *
- * Answers, immediately:
- *   - What needs me right now?
- *   - What did AI discover?
- *   - What should I do next?
+ * v1.0 refresh: M2 Card with proper elevation, M2 icons throughout,
+ * BlockedPanel that surfaces items needing human decision.
  */
 export default async function InboxPage() {
   const s = await getSession();
@@ -47,6 +52,7 @@ export default async function InboxPage() {
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 
   const urgentAction = blocked[0] ?? highPriority[0] ?? null;
+  const decisionItems = [...blocked, ...highPriority].slice(0, 4);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
@@ -70,8 +76,20 @@ export default async function InboxPage() {
           }
         />
 
+        {/* Blocked / needs-decision panel */}
+        {decisionItems.length > 0 ? (
+          <BlockedPanel
+            items={decisionItems}
+            rationale={
+              blocked.length > 0
+                ? `${blocked.length} item${blocked.length === 1 ? "" : "s"} ${blocked.length === 1 ? "is" : "are"} blocked and ${highPriority.length > 0 ? `${highPriority.length} ${highPriority.length === 1 ? "is" : "are"} high-priority. ` : ""}The Assistant can't proceed without you.`
+                : `${highPriority.length} high-priority item${highPriority.length === 1 ? "" : "s"} on your plate. The Assistant is waiting on a decision.`
+            }
+          />
+        ) : null}
+
         {/* Headline metrics — answer the most important question first */}
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <section aria-label="Headline metrics" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <MetricCard
             label="Needs attention"
             value={blocked.length + highPriority.length}
@@ -106,8 +124,8 @@ export default async function InboxPage() {
               Today
             </h2>
             <Link
-              href="/work"
-              className="text-xs font-medium text-brand-accent hover:underline"
+              href="/work?status=open"
+              className="text-2xs font-medium text-brand-accent hover:underline"
             >
               See all work →
             </Link>
@@ -128,11 +146,11 @@ export default async function InboxPage() {
               <h2 className="text-sm font-semibold tracking-tight text-text-primary">
                 AI briefing
               </h2>
-              <Badge tone="ai" dot>
+              <Badge tone="ai" size="sm" dot>
                 Live
               </Badge>
             </div>
-            <Card>
+            <Card elevation="flat" className="overflow-hidden">
               <CardBody className="p-0">
                 <ul className="divide-y divide-surface-divider">
                   {aiRuns.map((r) => (
@@ -161,7 +179,8 @@ export default async function InboxPage() {
                           <span className="text-text-muted">·</span>
                           <span className="text-text-muted">{r.routingProfile}</span>
                           <span className="text-text-muted">·</span>
-                          <span className="text-text-muted tabular-nums">
+                          <span className="text-text-muted inline-flex items-center gap-1 tabular-nums">
+                            <Clock size={10} aria-hidden="true" />
                             {timeAgo(r.createdAt)}
                           </span>
                         </div>
@@ -221,7 +240,7 @@ function MetricCard({
             ? "text-brand-ai"
             : "text-brand-accent";
   return (
-    <Card interactive className="orvix-card-hover">
+    <Card interactive elevation="floating" className="orvix-card-hover">
       <CardBody className="flex flex-col gap-1 p-4">
         <div className="flex items-center justify-between">
           <span className="text-2xs font-medium uppercase tracking-[0.06em] text-text-muted">

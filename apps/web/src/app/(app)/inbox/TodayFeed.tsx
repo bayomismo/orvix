@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { Badge, Card, CardBody, EmptyState } from "@orvix/ui";
+import { Badge, Card, CardBody, EmptyState, Users, Briefcase, Folder, CheckSquare, Message, File, InboxTray } from "@orvix/ui";
 import type { WorkItem } from "@/server/store";
 
 const STATUS_TONE: Record<string, "neutral" | "info" | "warning" | "success" | "danger"> = {
@@ -30,14 +30,14 @@ const PRIORITY_TONE: Record<string, "neutral" | "info" | "warning" | "danger"> =
   urgent: "danger",
 };
 
-const TYPE_ICON: Record<string, string> = {
-  customer: "M16 11a4 4 0 10-8 0 4 4 0 008 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
-  deal: "M3 7h18M3 12h18M3 17h12",
-  project: "M3 7l9-4 9 4-9 4v10l-9 4-9-4V7z",
-  task: "M5 13l4 4L19 7",
-  conversation: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z",
-  document: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6",
-  request: "M3 8l9 6 9-6 M3 8v10a2 2 0 002 2h14a2 2 0 002-2V8",
+const TYPE_ICON: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  customer: Users,
+  deal: Briefcase,
+  project: Folder,
+  task: CheckSquare,
+  conversation: Message,
+  document: File,
+  request: InboxTray,
 };
 
 export function TodayFeed({ items, empty }: { items: WorkItem[]; empty: boolean }) {
@@ -62,28 +62,22 @@ export function TodayFeed({ items, empty }: { items: WorkItem[]; empty: boolean 
     );
   }
   return (
-    <Card>
+    <Card elevation="flat" className="overflow-hidden">
       <CardBody className="p-0">
         <ul className="divide-y divide-surface-divider">
           {items.map((w) => {
-            const icon = TYPE_ICON[w.typeKey];
+            const Icon = TYPE_ICON[w.typeKey] ?? Users;
             return (
               <li key={w.id}>
                 <Link
                   href={`/work/${w.id}`}
-                  className="group flex items-center gap-3 px-5 py-3.5 transition-colors duration-fast ease-snappy hover:bg-surface-inset"
+                  className="group flex items-center gap-3 px-5 py-3.5 transition-colors duration-fast ease-out-quint hover:bg-surface-inset"
                 >
                   <span
                     aria-hidden="true"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-inset text-text-secondary"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-inset text-text-secondary transition-colors duration-fast ease-out-quint group-hover:bg-surface-elevated group-hover:text-text-primary"
                   >
-                    {icon ? (
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                        <path d={icon} />
-                      </svg>
-                    ) : (
-                      <span>?</span>
-                    )}
+                    <Icon size={14} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-text-primary">
@@ -105,7 +99,7 @@ export function TodayFeed({ items, empty }: { items: WorkItem[]; empty: boolean 
                   ) : null}
                   <span
                     aria-hidden="true"
-                    className="text-text-muted transition-transform duration-fast ease-snappy group-hover:translate-x-0.5"
+                    className="text-text-muted transition-transform duration-fast ease-out-quint group-hover:translate-x-0.5"
                   >
                     →
                   </span>
