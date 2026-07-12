@@ -38,8 +38,19 @@ export function PublicShell({ children, current }: PublicShellProps) {
     <div className="relative flex min-h-[100dvh] flex-col bg-surface-canvas">
       {/* The Pulse signature line, at the very top of the public surface */}
       <div className="fixed left-0 right-0 top-0 z-pulse h-px bg-surface-divider" />
+
+      {/* Skip-to-content link for keyboard users. Visible only on focus. */}
+      <a
+        href="#orvix-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-1/2 focus:z-toast focus:-translate-x-1/2 focus:inline-flex focus:h-9 focus:items-center focus:rounded-md focus:border focus:border-brand-accent focus:bg-brand-accent focus:px-3 focus:text-xs focus:font-semibold focus:text-text-on-accent focus:shadow-2"
+      >
+        Skip to main content
+      </a>
+
       <TopNav current={current} />
-      <main className="flex-1">{children}</main>
+      <main id="orvix-main" tabIndex={-1} className="flex-1 focus:outline-none">
+        {children}
+      </main>
       <Footer />
     </div>
   );

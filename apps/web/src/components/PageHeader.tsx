@@ -11,7 +11,7 @@ import * as React from "react";
  */
 export interface PageHeaderProps {
   kicker?: string;
-  title: string;
+  title: React.ReactNode;
   subtitle?: React.ReactNode;
   metadata?: React.ReactNode;
   actions?: React.ReactNode;

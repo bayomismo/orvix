@@ -259,8 +259,20 @@ export function AppShell({
         onOpenProfile={() => {}}
       />
 
+      {/* Skip-to-content link for keyboard users. Visible only on focus. */}
+      <a
+        href="#orvix-main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-1/2 focus:z-toast focus:-translate-x-1/2 focus:inline-flex focus:h-9 focus:items-center focus:rounded-md focus:border focus:border-brand-accent focus:bg-brand-accent focus:px-3 focus:text-xs focus:font-semibold focus:text-text-on-accent focus:shadow-2"
+      >
+        Skip to main content
+      </a>
+
       {/* The page content. Padded to clear the floating sidebar + topbar. */}
-      <main className="ml-[268px] pt-[72px] pr-6 pb-6 min-h-screen">
+      <main
+        id="orvix-main"
+        tabIndex={-1}
+        className="ml-[268px] pt-[72px] pr-6 pb-6 min-h-screen focus:outline-none"
+      >
         <div key={pathname} className="orvix-page-enter max-w-[1280px] mx-auto">
           {children}
         </div>
