@@ -192,12 +192,9 @@ export function Wizard() {
       className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-12"
     >
       <header className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-semibold tracking-tight text-text-primary">
-            ORVIX
-          </span>
-          <Badge tone="neutral">Onboarding</Badge>
-        </div>
+        <Badge tone="neutral" size="sm" className="w-fit">
+          Onboarding
+        </Badge>
         <h1 className="text-3xl font-semibold tracking-tight text-text-primary">
           Let&apos;s set up your workspace.
         </h1>

@@ -19,3 +19,4 @@ export * from "./AppTopbar";
 export * from "./NotificationCenter";
 export * from "./ProfileMenu";
 export * from "./AIBubble";
+export * from "./PublicShell";

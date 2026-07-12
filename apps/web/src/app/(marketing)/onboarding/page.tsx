@@ -11,5 +11,6 @@ export default async function OnboardingPage() {
   const existing = await getSession();
   if (existing) redirect("/inbox");
 
+  // The (marketing) route group already wraps children in <PublicShell />.
   return <Wizard />;
 }
