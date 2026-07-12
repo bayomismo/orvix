@@ -2,7 +2,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/PageHeader";
-import { Badge, Card, CardBody, EmptyState } from "@orvix/ui";
+import {
+  Badge,
+  Breadcrumb,
+  Card,
+  CardBody,
+  EmptyState,
+  Sparkles,
+  Clock,
+  Users,
+  Briefcase,
+  Folder,
+  CheckSquare,
+  Message,
+  File,
+  InboxTray,
+} from "@orvix/ui";
 
 import { getSession } from "@/server/auth";
 import { db, type Activity } from "@/server/store";
@@ -11,6 +26,7 @@ import { WorkItemActions } from "./WorkItemActions";
 import { CommentComposer } from "./CommentComposer";
 import { AttachmentButton } from "./AttachmentButton";
 import { AISummaryButton } from "./AISummaryButton";
+import { CustomerProfileCard } from "./CustomerProfileCard";
 
 export const dynamic = "force-dynamic";
 
@@ -37,14 +53,24 @@ const PRIORITY_TONE: Record<string, "neutral" | "warning" | "danger"> = {
   low: "neutral", normal: "neutral", high: "warning", urgent: "danger",
 };
 
-const TYPE_ICON: Record<string, string> = {
-  customer: "M16 11a4 4 0 10-8 0 4 4 0 008 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
-  deal: "M3 7h18M3 12h18M3 17h12",
-  project: "M3 7l9-4 9 4-9 4v10l-9 4-9-4V7z",
-  task: "M5 13l4 4L19 7",
-  conversation: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z",
-  document: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6",
-  request: "M3 8l9 6 9-6 M3 8v10a2 2 0 002 2h14a2 2 0 002-2V8",
+const TYPE_ICON: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  customer: Users,
+  deal: Briefcase,
+  project: Folder,
+  task: CheckSquare,
+  conversation: Message,
+  document: File,
+  request: InboxTray,
+};
+
+const TYPE_LABEL: Record<string, string> = {
+  customer: "Customer",
+  deal: "Deal",
+  project: "Project",
+  task: "Task",
+  conversation: "Conversation",
+  document: "Document",
+  request: "Request",
 };
 
 export default async function WorkItemPage({
@@ -71,33 +97,57 @@ export default async function WorkItemPage({
     (a) => a.workItemId === w.id,
   );
 
-  const icon = TYPE_ICON[w.typeKey] ?? TYPE_ICON.task;
+  // Related items: if this is a customer, show their conversations and tasks
+  const related = w.typeKey === "customer"
+    ? [...db.workItems.values()]
+        .filter(
+          (other) =>
+            other.workspaceId === s.workspace.id &&
+            other.id !== w.id &&
+            (other.typeKey === "conversation" ||
+              other.typeKey === "task" ||
+              other.typeKey === "document"),
+        )
+        .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+        .slice(0, 4)
+    : [];
+
+  const Icon = TYPE_ICON[w.typeKey] ?? CheckSquare;
+  const isCustomer = w.typeKey === "customer";
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-1.5 text-2xs text-text-muted">
-        <Link href="/work" className="transition-colors hover:text-text-secondary">
-          Work
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span className="capitalize">{w.typeKey}</span>
-        <span aria-hidden="true">/</span>
-        <span className="font-mono tabular-nums">#{w.id.slice(0, 6)}</span>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: "Work", href: "/work" },
+          { label: TYPE_LABEL[w.typeKey] ?? w.typeKey, href: `/work?type=${w.typeKey}` },
+          { label: w.title },
+        ]}
+      />
 
       <PageHeader
         compact
         title={w.title}
         subtitle={
-          <span className="flex items-center gap-1.5 text-xs text-text-muted">
+          <span className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
+            <span className="flex h-5 w-5 items-center justify-center rounded bg-surface-inset text-text-secondary">
+              <Icon size={12} />
+            </span>
+            <span>{TYPE_LABEL[w.typeKey] ?? w.typeKey}</span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums">#{w.id.slice(0, 6)}</span>
+            <span aria-hidden="true">·</span>
             <Badge tone={STATUS_TONE[w.status] ?? "neutral"} size="sm">
               {STATUS_LABEL[w.status] ?? w.status}
             </Badge>
             <Badge tone={PRIORITY_TONE[w.priority] ?? "neutral"} size="sm">
-              {PRIORITY_LABEL[w.priority] ?? w.priority} priority
+              {PRIORITY_LABEL[w.priority] ?? w.priority}
             </Badge>
             <span aria-hidden="true">·</span>
-            <span>Updated {timeAgo(w.updatedAt)}</span>
+            <span className="inline-flex items-center gap-1">
+              <Clock size={10} aria-hidden="true" />
+              {timeAgo(w.updatedAt)}
+            </span>
           </span>
         }
         actions={
@@ -112,7 +162,7 @@ export default async function WorkItemPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-6 min-w-0">
-          <Card>
+          <Card elevation="raised">
             <CardBody className="p-6">
               {w.description ? (
                 <div className="prose prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed text-text-primary">
@@ -126,6 +176,60 @@ export default async function WorkItemPage({
             </CardBody>
           </Card>
 
+          {isCustomer && related.length > 0 ? (
+            <section className="flex flex-col gap-3">
+              <header className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold tracking-tight text-text-primary">
+                  Related
+                </h3>
+                <span className="text-2xs text-text-muted tabular-nums">{related.length}</span>
+              </header>
+              <Card elevation="flat" className="overflow-hidden">
+                <CardBody className="p-0">
+                  <ul className="divide-y divide-surface-divider">
+                    {related.map((r) => {
+                      const RIcon = TYPE_ICON[r.typeKey] ?? CheckSquare;
+                      return (
+                        <li key={r.id}>
+                          <Link
+                            href={`/work/${r.id}`}
+                            className="group flex items-center gap-3 px-5 py-3 transition-colors duration-fast ease-out-quint hover:bg-surface-inset"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface-inset text-text-secondary transition-colors duration-fast ease-out-quint group-hover:bg-surface-elevated group-hover:text-text-primary"
+                            >
+                              <RIcon size={12} />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium text-text-primary">
+                                {r.title}
+                              </div>
+                              <div className="mt-0.5 flex items-center gap-1.5 text-2xs text-text-muted">
+                                <span className="capitalize">{r.typeKey}</span>
+                                <span aria-hidden="true">·</span>
+                                <span>{timeAgo(r.updatedAt)}</span>
+                              </div>
+                            </div>
+                            <Badge tone={STATUS_TONE[r.status] ?? "neutral"} size="sm">
+                              {STATUS_LABEL[r.status] ?? r.status}
+                            </Badge>
+                            <span
+                              aria-hidden="true"
+                              className="text-text-muted transition-transform duration-fast ease-out-quint group-hover:translate-x-0.5"
+                            >
+                              →
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardBody>
+              </Card>
+            </section>
+          ) : null}
+
           <section className="flex flex-col gap-3">
             <header className="flex items-center justify-between">
               <h3 className="text-sm font-semibold tracking-tight text-text-primary">
@@ -134,7 +238,7 @@ export default async function WorkItemPage({
               <AttachmentButton workItemId={w.id} />
             </header>
             {comments.length === 0 ? (
-              <Card>
+              <Card elevation="flat">
                 <CardBody className="p-5">
                   <EmptyState
                     shape="empty"
@@ -144,7 +248,7 @@ export default async function WorkItemPage({
                 </CardBody>
               </Card>
             ) : (
-              <Card>
+              <Card elevation="flat" className="overflow-hidden">
                 <ul className="divide-y divide-surface-divider">
                   {comments.map((c) => {
                     const author = c.authorId === "automation" ? null : db.users.get(c.authorId);
@@ -158,7 +262,8 @@ export default async function WorkItemPage({
                             {author?.displayName ?? "Automation"}
                           </span>
                           <span className="text-text-muted">·</span>
-                          <span className="text-text-muted tabular-nums">
+                          <span className="text-text-muted inline-flex items-center gap-1 tabular-nums">
+                            <Clock size={10} aria-hidden="true" />
                             {new Date(c.createdAt).toLocaleString()}
                           </span>
                         </div>
@@ -179,7 +284,7 @@ export default async function WorkItemPage({
               <h3 className="text-sm font-semibold tracking-tight text-text-primary">
                 Attachments <span className="ml-1.5 text-2xs font-normal text-text-muted tabular-nums">{attachments.length}</span>
               </h3>
-              <Card>
+              <Card elevation="flat" className="overflow-hidden">
                 <ul className="divide-y divide-surface-divider">
                   {attachments.map((a) => (
                     <li key={a.id} className="flex items-center gap-3 px-5 py-3">
@@ -187,9 +292,7 @@ export default async function WorkItemPage({
                         aria-hidden="true"
                         className="flex h-8 w-8 items-center justify-center rounded-md bg-surface-inset text-text-muted"
                       >
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
-                        </svg>
+                        <File size={14} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium text-text-primary">
@@ -208,23 +311,23 @@ export default async function WorkItemPage({
         </div>
 
         <aside className="flex flex-col gap-4">
-          <Card>
+          {isCustomer ? <CustomerProfileCard w={w} /> : null}
+
+          <Card elevation="raised">
             <CardBody className="flex flex-col gap-3 p-5">
               <div className="flex items-center gap-2.5">
                 <span
                   aria-hidden="true"
                   className="flex h-8 w-8 items-center justify-center rounded-md bg-surface-inset text-text-secondary"
                 >
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={icon} />
-                  </svg>
+                  <Icon size={14} />
                 </span>
                 <h3 className="text-sm font-semibold tracking-tight text-text-primary">
                   Details
                 </h3>
               </div>
               <div className="flex flex-col gap-2.5">
-                <DetailRow label="Type" value={<span className="capitalize">{w.typeKey}</span>} />
+                <DetailRow label="Type" value={<span className="capitalize">{TYPE_LABEL[w.typeKey] ?? w.typeKey}</span>} />
                 <DetailRow
                   label="Status"
                   value={<Badge tone={STATUS_TONE[w.status] ?? "neutral"} size="sm">{STATUS_LABEL[w.status] ?? w.status}</Badge>}
@@ -253,14 +356,17 @@ export default async function WorkItemPage({
             </CardBody>
           </Card>
 
-          <Card>
-            <CardBody className="flex flex-col gap-3 p-5">
+          <Card elevation="raised" className="overflow-hidden">
+            <header className="flex items-center justify-between border-b border-surface-divider bg-surface-canvas/40 px-5 py-3.5">
               <div className="flex items-center gap-2">
+                <Sparkles size={14} className="text-brand-ai" aria-hidden="true" />
                 <h3 className="text-sm font-semibold tracking-tight text-text-primary">
                   AI Assistant
                 </h3>
-                <Badge tone="ai" size="sm" dot>Live</Badge>
               </div>
+              <Badge tone="ai" size="sm" dot>Live</Badge>
+            </header>
+            <CardBody className="flex flex-col gap-3 p-5">
               <p className="text-xs text-text-secondary leading-relaxed">
                 Summarize, suggest next steps, draft a status update.
               </p>
@@ -268,7 +374,7 @@ export default async function WorkItemPage({
             </CardBody>
           </Card>
 
-          <Card>
+          <Card elevation="raised">
             <CardBody className="flex flex-col gap-3 p-5">
               <h3 className="text-sm font-semibold tracking-tight text-text-primary">
                 Activity
